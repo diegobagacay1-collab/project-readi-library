@@ -2217,7 +2217,7 @@
                     
                     const hsC = document.createElement('div');
                     hsC.style.cssText = "position:absolute; inset:0;";
-                    page.data.hotspots.forEach(hs => {
+                    Object.values(page.data.hotspots || {}).forEach(hs => {
                         const spot = document.createElement('div');
                         spot.className = 'hotspot-student-box';
                         spot.style.left = `${hs.x}%`; spot.style.top = `${hs.y}%`; spot.style.width = `${hs.w}%`; spot.style.height = `${hs.h}%`;
