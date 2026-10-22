@@ -1228,7 +1228,7 @@
                 This web-based school innovation portal is protected for authorized school use. Please enter the official access password to enter the website:
             </p>
             <div class="privacy-input-wrap">
-                <input type="password" id="site-privacy-password-input" class="privacy-password-field" placeholder="Enter Access Password..." autocomplete="off" onkeydown="if(event.key==='Enter') App.verifySitePrivacyPassword()">
+                <input type="password" id="site-privacy-password-input" class="privacy-password-field" value="" placeholder="Enter Access Password..." autocomplete="new-password" data-lpignore="true" readonly onfocus="this.removeAttribute('readonly');" onkeydown="if(event.key==='Enter') App.verifySitePrivacyPassword()">
                 <button type="button" onclick="App.toggleSitePrivacyPasswordVisibility()" class="btn btn-glass" style="padding: 0 1.1rem; border-radius: 14px;" title="Show/Hide Password">&#128065;&#65039;</button>
             </div>
             <div id="site-privacy-error" class="privacy-error-msg hidden">&#9888;&#65039; Incorrect password. Please enter the authorized school password.</div>
@@ -1266,6 +1266,9 @@
                 </div>
                 <button onclick="Viewer.toggleFullscreen()" class="btn btn-glass" style="border-radius: 99px; padding: 0.7rem 1.25rem; font-size: 0.92rem;" title="Toggle 16:9 Widescreen Fullscreen Mode">
                     &#9974; Fullscreen TV
+                </button>
+                <button onclick="App.lockSitePrivacyGate(true)" class="btn btn-glass" style="border-radius: 99px; padding: 0.7rem 1.25rem; font-size: 0.92rem; border-color: rgba(255,215,0,0.55); color: #FEF08A;" title="Lock Website &amp; Require Password Again">
+                    &#128274; Lock Site
                 </button>
                 <button onclick="App.openTeacherLoginModal()" class="btn btn-gold" style="border-radius: 99px; padding: 0.75rem 1.6rem; font-size: 0.98rem;">
                     &#128274; Teacher Login
@@ -2912,9 +2915,8 @@
                     await App.loadBackground();
                     App.initWallpaperThumbs();
                     App.initRealtimeCloudListeners();
+                    App.lockSitePrivacyGate(false);
                     App.navigate('public-library');
-                    const gateInp = Utils.$('site-privacy-password-input');
-                    if (gateInp) setTimeout(() => gateInp.focus(), 120);
                 } catch (e) {
                     console.error(e);
                     document.body.innerHTML = `<div style="padding:4rem;text-align:center;"><h2>Initialization Failed</h2></div>`;
@@ -3028,10 +3030,38 @@
                 UI.toast("Reverted to Default Royal Sapphire Wallpaper!");
             },
 
-            /* --- WEBSITE PRIVACY GATE AUTHENTICATION (PASSWORD: 119948) --- */
+            /* --- WEBSITE PRIVACY GATE AUTHENTICATION (PASSWORD: 119948 - ALWAYS ASK ON EVERY REFRESH) --- */
+            lockSitePrivacyGate: (showToast = false) => {
+                try {
+                    sessionStorage.removeItem('readi_site_unlocked');
+                    localStorage.removeItem('readi_site_unlocked');
+                } catch (e) {}
+                document.body.classList.add('site-locked');
+                const gate = Utils.$('website-privacy-gate');
+                if (gate) gate.classList.remove('unlocked');
+                const err = Utils.$('site-privacy-error');
+                if (err) err.classList.add('hidden');
+                const inp = Utils.$('site-privacy-password-input');
+                if (inp) {
+                    inp.value = '';
+                    inp.type = 'password';
+                    inp.style.borderColor = 'rgba(255, 215, 0, 0.6)';
+                    inp.setAttribute('readonly', 'readonly');
+                    setTimeout(() => {
+                        inp.removeAttribute('readonly');
+                        inp.value = '';
+                        inp.focus();
+                    }, 120);
+                }
+                if (showToast && typeof UI !== 'undefined' && UI.toast) {
+                    UI.toast("Website Locked! Enter password to access.");
+                }
+            },
+
             toggleSitePrivacyPasswordVisibility: () => {
                 const inp = Utils.$('site-privacy-password-input');
                 if (!inp) return;
+                inp.removeAttribute('readonly');
                 inp.type = inp.type === 'password' ? 'text' : 'password';
             },
 
@@ -3042,6 +3072,7 @@
                 const val = inp ? inp.value.trim() : '';
                 if (val === '119948') {
                     if (err) err.classList.add('hidden');
+                    if (inp) inp.value = '';
                     document.body.classList.remove('site-locked');
                     SoundFX.correct();
                     if (gate) gate.classList.add('unlocked');
@@ -3051,6 +3082,7 @@
                     if (err) err.classList.remove('hidden');
                     if (inp) {
                         inp.style.borderColor = '#EF4444';
+                        inp.removeAttribute('readonly');
                         inp.focus();
                     }
                 }
@@ -4589,6 +4621,11 @@
         });
 
         window.onload = App.init;
+        window.addEventListener('pageshow', () => {
+            if (typeof App !== 'undefined' && App.lockSitePrivacyGate) {
+                App.lockSitePrivacyGate(false);
+            }
+        });
     </script>
 </body>
 <!-- AUTO-HD IMAGE OPTIMIZER & FIREBASE LARGE-WRITE FIX -->
