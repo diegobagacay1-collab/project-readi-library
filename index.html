@@ -4338,4 +4338,140 @@
         window.onload = App.init;
     </script>
 </body>
+<!-- AUTO-HD IMAGE OPTIMIZER & FIREBASE LARGE-WRITE FIX -->
+<script>
+(function() {
+    const MAX_DIMENSION = 1280; // 1280px HD (Tin-aw kaayo sa Classroom TV ug Mobile)
+    const IMAGE_QUALITY = 0.85; // 85% High Visual Quality
+    const SIZE_THRESHOLD = 150000; // Optimize lang kon molapas sa ~150KB
+
+    // Helper: Convert Base64 Image ngadto sa HD WebP Base64
+    function optimizeDataUrl(src) {
+        return new Promise((resolve) => {
+            if (typeof src !== 'string' || !src.startsWith('data:image/') || src.length <= SIZE_THRESHOLD) {
+                return resolve(src);
+            }
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const scale = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height));
+                canvas.width = Math.round(img.width * scale);
+                canvas.height = Math.round(img.height * scale);
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const webp = canvas.toDataURL('image/webp', IMAGE_QUALITY);
+                resolve(webp.length < src.length ? webp : src);
+            };
+            img.onerror = function() { resolve(src); };
+            img.src = src;
+        });
+    }
+
+    // Helper: Recursively optimize tanang images sulod sa Storybook object
+    async function walkAndOptimize(obj) {
+        if (typeof obj === 'string') {
+            return await optimizeDataUrl(obj);
+        }
+        if (Array.isArray(obj)) {
+            const arr = [];
+            for (let i = 0; i < obj.length; i++) {
+                arr[i] = await walkAndOptimize(obj[i]);
+            }
+            return arr;
+        }
+        if (obj && typeof obj === 'object') {
+            const copy = {};
+            for (const key of Object.keys(obj)) {
+                copy[key] = await walkAndOptimize(obj[key]);
+            }
+            return copy;
+        }
+        return obj;
+    }
+
+    // 1. Auto-Optimize sa tanang bag-ong Image Uploads pinaagi sa FileReader
+    const origReadAsDataURL = FileReader.prototype.readAsDataURL;
+    FileReader.prototype.readAsDataURL = function(blob) {
+        if (blob && blob.type && blob.type.startsWith('image/') && blob.size > 120000) {
+            const readerInstance = this;
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = function() {
+                URL.revokeObjectURL(url);
+                const canvas = document.createElement('canvas');
+                const scale = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height));
+                canvas.width = Math.round(img.width * scale);
+                canvas.height = Math.round(img.height * scale);
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob(function(webpBlob) {
+                    origReadAsDataURL.call(readerInstance, webpBlob || blob);
+                }, 'image/webp', IMAGE_QUALITY);
+            };
+            img.onerror = function() {
+                URL.revokeObjectURL(url);
+                origReadAsDataURL.call(readerInstance, blob);
+            };
+            img.src = url;
+            return;
+        }
+        return origReadAsDataURL.apply(this, arguments);
+    };
+
+    // 2. Auto-Optimize sa dili pa mag-upload sa Firebase Realtime Database
+    if (window.firebase && firebase.database) {
+        const RefProto = firebase.database.Reference.prototype;
+        const origSet = RefProto.set;
+        const origUpdate = RefProto.update;
+
+        RefProto.set = async function(val, onComplete) {
+            const optimizedVal = await walkAndOptimize(val);
+            return origSet.call(this, optimizedVal, onComplete);
+        };
+
+        RefProto.update = async function(val, onComplete) {
+            const optimizedVal = await walkAndOptimize(val);
+            return origUpdate.call(this, optimizedVal, onComplete);
+        };
+    }
+
+    // 3. Background Auto-Optimize para sa mga libro nga naa na daan sa Offline IndexedDB
+    window.addEventListener('load', async function() {
+        if (!window.indexedDB || !indexedDB.databases) return;
+        try {
+            const dbs = await indexedDB.databases();
+            for (const info of dbs) {
+                if (!info.name || info.name.includes('firebase')) continue;
+                const db = await new Promise((res, rej) => {
+                    const req = indexedDB.open(info.name);
+                    req.onsuccess = () => res(req.result);
+                    req.onerror = () => rej(req.error);
+                });
+                for (const storeName of db.objectStoreNames) {
+                    const txRead = db.transaction(storeName, 'readonly');
+                    const storeRead = txRead.objectStore(storeName);
+                    const vals = await new Promise(r => { const q = storeRead.getAll(); q.onsuccess = () => r(q.result); });
+                    const keys = await new Promise(r => { const q = storeRead.getAllKeys(); q.onsuccess = () => r(q.result); });
+                    for (let i = 0; i < vals.length; i++) {
+                        const rawStr = JSON.stringify(vals[i]);
+                        if (rawStr && rawStr.length > SIZE_THRESHOLD) {
+                            const optimized = await walkAndOptimize(vals[i]);
+                            const txWrite = db.transaction(storeName, 'readwrite');
+                            const storeWrite = txWrite.objectStore(storeName);
+                            storeWrite.keyPath ? storeWrite.put(optimized) : storeWrite.put(optimized, keys[i]);
+                        }
+                    }
+                }
+            }
+            console.log("PROJECT READi Auto-HD Optimizer: Ready & Synced.");
+        } catch (err) {
+            console.warn("IndexedDB optimization skipped:", err);
+        }
+    });
+})();
+</script>
 </html>
