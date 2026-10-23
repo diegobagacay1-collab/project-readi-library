@@ -1425,6 +1425,10 @@
                         <button onclick="App.publishAllToCloud()" class="btn btn-publish w-full" style="padding: 1.1rem; font-size: 1.02rem; border-radius: 16px;">
                             &#9729;&#65039; Publish / Sync All to Online Library
                         </button>
+
+                        <button onclick="App.syncCloudLibrary(true)" class="btn btn-glass w-full" style="padding: 0.95rem; font-size: 0.95rem; border-radius: 16px; border-color: #38BDF8; color: #BAE6FD;">
+                            &#128260; Sync / Load All Online Books to Studio
+                        </button>
                         
                         <div class="glass-panel text-center" style="padding: 1.5rem;">
                             <span class="form-label">Hybrid Storage Engine</span>
@@ -3118,6 +3122,7 @@
                     App.closeTeacherLoginModal();
                     SoundFX.correct();
                     App.navigate('dashboard');
+                    App.syncCloudLibrary(false);
                     UI.toast("Welcome to Executive Teacher Studio Pro!");
                 } else {
                     SoundFX.wrong();
@@ -3133,11 +3138,131 @@
             },
 
             /* --- REAL-TIME CLOUD LISTENERS (FIREBASE + LOCAL FALLBACK) --- */
+            normalizeCloudBook: (id, rawBook) => {
+                if (!rawBook || !rawBook.meta) return null;
+                const meta = JSON.parse(JSON.stringify(rawBook.meta));
+                meta.id = id;
+                meta.questions = Array.isArray(meta.questions) ? meta.questions : Object.values(meta.questions || {});
+                if (!meta.certNameY) meta.certNameY = 52;
+
+                const rawPages = Array.isArray(rawBook.pages) ? rawBook.pages : Object.values(rawBook.pages || {});
+                const pages = rawPages.filter(Boolean).map((p, idx) => {
+                    const pageCopy = JSON.parse(JSON.stringify(p));
+                    pageCopy.id = pageCopy.id || ('page_' + id + '_' + idx);
+                    pageCopy.storyId = id;
+                    pageCopy.pageIndex = typeof pageCopy.pageIndex === 'number' ? pageCopy.pageIndex : idx;
+                    const rawHs = Array.isArray(pageCopy.hotspots) ? pageCopy.hotspots : Object.values(pageCopy.hotspots || {});
+                    pageCopy.hotspots = rawHs.filter(Boolean).map(hs => ({
+                        ...hs,
+                        syllableAudios: Array.isArray(hs.syllableAudios) ? hs.syllableAudios : Object.values(hs.syllableAudios || {})
+                    }));
+                    return pageCopy;
+                }).sort((a, b) => (a.pageIndex || 0) - (b.pageIndex || 0));
+
+                meta.pageCount = pages.length;
+                if (!meta.coverThumb && pages.length > 0 && pages[0].image) {
+                    meta.coverThumb = pages[0].image;
+                }
+                const publishedAt = rawBook.publishedAt || meta.updatedAt || 0;
+                const updatedAt = meta.updatedAt || rawBook.updatedAt || publishedAt;
+                meta.updatedAt = updatedAt;
+                return { id, meta, pages, publishedAt, updatedAt, source: 'cloud' };
+            },
+
+            syncCloudToLocalDB: async (cloudData) => {
+                if (!cloudData || typeof cloudData !== 'object') return;
+                try {
+                    const localStories = await DB.getAllStories();
+                    const localMap = {};
+                    localStories.forEach(s => { localMap[s.id] = s; });
+
+                    for (const id of Object.keys(cloudData)) {
+                        // Do not overwrite a story currently open in the editor
+                        if (App.currentStoryMeta && App.currentStoryMeta.id === id && !Utils.$('view-editor').classList.contains('hidden')) {
+                            continue;
+                        }
+                        const norm = App.normalizeCloudBook(id, cloudData[id]);
+                        if (!norm || norm.pages.length === 0) continue;
+
+                        const existingLocal = localMap[id];
+                        const localTime = existingLocal ? (existingLocal.updatedAt || 0) : -1;
+                        if (!existingLocal || norm.updatedAt >= localTime) {
+                            await DB.putStory(norm.meta);
+                            await DB.deleteStoryPages(id);
+                            for (let i = 0; i < norm.pages.length; i++) {
+                                await DB.putPage(norm.pages[i]);
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Background cloud-to-local sync warning:", err);
+                }
+            },
+
+            autoSyncCurrentStoryToCloud: async (showToast = false) => {
+                if (!rtdb || !App.currentStoryMeta) return;
+                try {
+                    App.currentStoryMeta.updatedAt = Date.now();
+                    App.currentStoryMeta.pageCount = App.currentStoryPages.length;
+                    if (App.currentStoryPages.length > 0) {
+                        App.currentStoryMeta.coverThumb = App.currentStoryPages[0].image;
+                    }
+                    await DB.putStory(App.currentStoryMeta);
+                    if (App.currentStoryPages.length > 0) {
+                        const payload = {
+                            meta: JSON.parse(JSON.stringify(App.currentStoryMeta)),
+                            pages: JSON.parse(JSON.stringify(App.currentStoryPages)),
+                            publishedAt: Date.now(),
+                            updatedAt: App.currentStoryMeta.updatedAt
+                        };
+                        App.cloudBooksCache[App.currentStoryMeta.id] = payload;
+                        await rtdb.ref(`cloud_library/${App.currentStoryMeta.id}`).set(payload);
+                        if (showToast) UI.toast("Saved & synced online to Cloud Library!");
+                    }
+                } catch (err) {
+                    console.warn("Auto-sync to cloud warning:", err);
+                }
+            },
+
+            sortBooksWithRatingsAndCommentsFirst: (booksList, mode = 'ALL') => {
+                return [...booksList].sort((a, b) => {
+                    const idA = a.id || (a.meta && a.meta.id);
+                    const idB = b.id || (b.meta && b.meta.id);
+                    const stA = App.getBookStatsSummary(idA);
+                    const stB = App.getBookStatsSummary(idB);
+
+                    if (mode === 'POPULAR') {
+                        if (stB.totalReads !== stA.totalReads) return stB.totalReads - stA.totalReads;
+                    } else if (mode === 'LIVE') {
+                        if (stB.liveReaders !== stA.liveReaders) return stB.liveReaders - stA.liveReaders;
+                    }
+
+                    // 1. Stories with ratings or comments (reviewCount > 0) ALWAYS come first!
+                    const hasRevA = stA.reviewCount > 0 ? 1 : 0;
+                    const hasRevB = stB.reviewCount > 0 ? 1 : 0;
+                    if (hasRevB !== hasRevA) return hasRevB - hasRevA;
+
+                    // 2. Among stories with ratings/comments, sort by highest star rating & review count
+                    if (mode === 'RATED') {
+                        if (stB.avgStarsNum !== stA.avgStarsNum) return stB.avgStarsNum - stA.avgStarsNum;
+                        if (stB.reviewCount !== stA.reviewCount) return stB.reviewCount - stA.reviewCount;
+                    } else {
+                        if (stB.reviewCount !== stA.reviewCount) return stB.reviewCount - stA.reviewCount;
+                        if (stB.avgStarsNum !== stA.avgStarsNum) return stB.avgStarsNum - stA.avgStarsNum;
+                    }
+
+                    // 3. Tie-breaker: Total Reads descending, then newest updatedAt/publishedAt
+                    if (stB.totalReads !== stA.totalReads) return stB.totalReads - stA.totalReads;
+                    return (b.updatedAt || b.publishedAt || 0) - (a.updatedAt || a.publishedAt || 0);
+                });
+            },
+
             initRealtimeCloudListeners: () => {
                 if (!rtdb) return;
 
-                rtdb.ref('cloud_library').on('value', (snap) => {
+                rtdb.ref('cloud_library').on('value', async (snap) => {
                     App.cloudBooksCache = snap.val() || {};
+                    await App.syncCloudToLocalDB(App.cloudBooksCache);
                     App.renderPublicLibrary();
                     if (!Utils.$('view-dashboard').classList.contains('hidden')) {
                         App.renderDashboard();
@@ -3149,6 +3274,9 @@
                 rtdb.ref('books_stats').on('value', (snap) => {
                     App.booksStatsCache = snap.val() || {};
                     App.updateAllLiveCountersUI();
+                    if (App.librarySortMode === 'POPULAR' || App.librarySortMode === 'LIVE') {
+                        App.renderPublicLibrary();
+                    }
                     if (!Utils.$('view-dashboard').classList.contains('hidden')) {
                         App.renderUtilizationReport();
                     }
@@ -3157,10 +3285,12 @@
                 rtdb.ref('books_reviews').on('value', (snap) => {
                     App.booksReviewsCache = snap.val() || {};
                     App.updateAllLiveCountersUI();
+                    App.renderPublicLibrary();
                     if (App.activeReviewBookId) {
                         App.renderModalReviewsList(App.activeReviewBookId);
                     }
                     if (!Utils.$('view-dashboard').classList.contains('hidden')) {
+                        App.renderDashboard();
                         App.renderUtilizationReport();
                         App.renderTeacherCommentsModeration();
                     }
@@ -3170,33 +3300,64 @@
             syncCloudLibrary: async (showMsg = false) => {
                 if (!rtdb) {
                     App.renderPublicLibrary();
+                    if (!Utils.$('view-dashboard').classList.contains('hidden')) App.renderDashboard();
                     if (showMsg) UI.toast("Refreshed local library.");
                     return;
                 }
-                const snap = await rtdb.ref('cloud_library').once('value');
-                App.cloudBooksCache = snap.val() || {};
-                App.renderPublicLibrary();
-                if (showMsg) UI.toast("Online Library synced in real time!");
+                try {
+                    const [libSnap, statsSnap, revSnap] = await Promise.all([
+                        rtdb.ref('cloud_library').once('value'),
+                        rtdb.ref('books_stats').once('value'),
+                        rtdb.ref('books_reviews').once('value')
+                    ]);
+                    App.cloudBooksCache = libSnap.val() || {};
+                    App.booksStatsCache = statsSnap.val() || {};
+                    App.booksReviewsCache = revSnap.val() || {};
+                    await App.syncCloudToLocalDB(App.cloudBooksCache);
+                    App.renderPublicLibrary();
+                    if (!Utils.$('view-dashboard').classList.contains('hidden')) {
+                        App.renderDashboard();
+                        App.renderUtilizationReport();
+                        App.renderTeacherCommentsModeration();
+                    }
+                    if (showMsg) UI.toast("All Online Storybooks synced to Studio & Library!");
+                } catch (e) {
+                    if (showMsg) UI.toast("Sync completed with local cache.");
+                }
             },
 
-            getCombinedLibraryBooks: async () => {
+            getCombinedLibraryBooks: async (includeDrafts = false) => {
                 const map = {};
                 Object.keys(App.cloudBooksCache || {}).forEach(id => {
-                    const b = App.cloudBooksCache[id];
-                    if (b && b.meta && (b.meta.pageCount > 0 || (b.pages && b.pages.length > 0))) {
-                        map[id] = { id, meta: b.meta, pages: b.pages || [], publishedAt: b.publishedAt || 0, source: 'cloud' };
+                    const norm = App.normalizeCloudBook(id, App.cloudBooksCache[id]);
+                    if (norm && (includeDrafts || norm.pages.length > 0)) {
+                        map[id] = norm;
                     }
                 });
                 const localStories = await DB.getAllStories();
                 for (const m of localStories) {
-                    if (!map[m.id] && m.pageCount > 0) {
-                        const pages = await DB.getPagesByStory(m.id);
-                        if (pages && pages.length > 0) {
-                            map[m.id] = { id: m.id, meta: m, pages, publishedAt: 0, source: 'local' };
+                    const pages = await DB.getPagesByStory(m.id);
+                    const hasPages = pages && pages.length > 0;
+                    if (!includeDrafts && !hasPages) continue;
+
+                    const localUpdated = m.updatedAt || 0;
+                    const existingCloud = map[m.id];
+                    if (!existingCloud || localUpdated > (existingCloud.updatedAt || 0)) {
+                        const metaCopy = { ...m, pageCount: pages.length };
+                        if (!metaCopy.coverThumb && hasPages && pages[0].image) {
+                            metaCopy.coverThumb = pages[0].image;
                         }
+                        map[m.id] = {
+                            id: m.id,
+                            meta: metaCopy,
+                            pages: pages || [],
+                            publishedAt: existingCloud ? existingCloud.publishedAt : localUpdated,
+                            updatedAt: localUpdated,
+                            source: existingCloud ? 'cloud' : 'local'
+                        };
                     }
                 }
-                return Object.values(map);
+                return App.sortBooksWithRatingsAndCommentsFirst(Object.values(map), 'ALL');
             },
 
             getBookStatsSummary: (bookId) => {
@@ -3217,7 +3378,7 @@
             },
 
             renderPublicLibrary: async () => {
-                const books = await App.getCombinedLibraryBooks();
+                const books = await App.getCombinedLibraryBooks(false);
                 const searchVal = (Utils.$('student-search-input')?.value || '').trim().toLowerCase();
                 let filtered = books.filter(b => {
                     const t = (b.meta.title || '').toLowerCase();
@@ -3225,13 +3386,7 @@
                     return !searchVal || t.includes(searchVal) || a.includes(searchVal);
                 });
 
-                if (App.librarySortMode === 'POPULAR') {
-                    filtered.sort((a, b) => App.getBookStatsSummary(b.id).totalReads - App.getBookStatsSummary(a.id).totalReads);
-                } else if (App.librarySortMode === 'RATED') {
-                    filtered.sort((a, b) => App.getBookStatsSummary(b.id).avgStarsNum - App.getBookStatsSummary(a.id).avgStarsNum);
-                } else if (App.librarySortMode === 'LIVE') {
-                    filtered.sort((a, b) => App.getBookStatsSummary(b.id).liveReaders - App.getBookStatsSummary(a.id).liveReaders);
-                }
+                filtered = App.sortBooksWithRatingsAndCommentsFirst(filtered, App.librarySortMode);
 
                 const grid = Utils.$('public-library-grid');
                 const countLbl = Utils.$('student-book-count-label');
@@ -3295,6 +3450,7 @@
                                 <button onclick="App.openReviewModal('${item.id}')" class="btn btn-glass" style="flex: 1.2; padding: 0.8rem 0.85rem; font-size: 0.92rem; border-color: var(--color-gold); border-radius: 14px;" title="Rate with Stars &amp; Comment">
                                     &#11088; Reviews (<span id="card-revcount-${item.id}">${stats.reviewCount}</span>)
                                 </button>
+                                ${App.isTeacherAuthenticated ? `<button onclick="App.openStory('${item.id}')" class="btn btn-glass" style="padding: 0.8rem 0.95rem; font-size: 0.92rem; border-color: #38BDF8; color: #BAE6FD; border-radius: 14px;" title="Edit Storybook in Teacher Studio">&#9998; Edit</button>` : ''}
                                 <button onclick="App.studentDownloadBook('${item.id}')" class="btn btn-publish" style="padding: 0.8rem 1rem; font-size: 0.95rem; border-radius: 14px;" title="Download 100% Offline Storybook HTML">
                                     &#11015;&#65039;
                                 </button>
@@ -3308,7 +3464,7 @@
             },
 
             updateAllLiveCountersUI: async () => {
-                const books = await App.getCombinedLibraryBooks();
+                const books = await App.getCombinedLibraryBooks(false);
                 let totalLive = 0;
                 let totalReads = 0;
                 let totalDownloads = 0;
@@ -3352,16 +3508,10 @@
 
             /* --- STUDENT REAL-TIME READING & DOWNLOAD TRACKING --- */
             openBookAsStudent: async (bookId) => {
-                let meta = null;
-                let pages = [];
-
-                if (App.cloudBooksCache && App.cloudBooksCache[bookId]) {
-                    meta = App.cloudBooksCache[bookId].meta;
-                    pages = App.cloudBooksCache[bookId].pages || [];
-                } else {
-                    meta = await DB.getStory(bookId);
-                    pages = await DB.getPagesByStory(bookId);
-                }
+                const combined = await App.getCombinedLibraryBooks(true);
+                const found = combined.find(b => b.id === bookId);
+                let meta = found ? found.meta : await DB.getStory(bookId);
+                let pages = found ? found.pages : await DB.getPagesByStory(bookId);
 
                 if (!meta || !pages || pages.length === 0) {
                     UI.toast("Book pages are still loading or empty.");
@@ -3400,7 +3550,7 @@
             /* --- STUDENT STAR RATING & COMMENT MODAL --- */
             openReviewModal: async (bookId) => {
                 App.activeReviewBookId = bookId;
-                const books = await App.getCombinedLibraryBooks();
+                const books = await App.getCombinedLibraryBooks(true);
                 const found = books.find(b => b.id === bookId);
                 const title = found && found.meta ? found.meta.title : 'Storybook';
                 Utils.$('review-modal-title').innerHTML = `&#11088; ${title}`;
@@ -3455,7 +3605,11 @@
                 SoundFX.correct();
                 UI.toast("Thank you for your Star Rating and Comment!");
                 App.renderModalReviewsList(bookId);
-                App.updateAllLiveCountersUI();
+                App.renderPublicLibrary();
+                if (!Utils.$('view-dashboard').classList.contains('hidden')) {
+                    App.renderDashboard();
+                    App.renderUtilizationReport();
+                }
             },
 
             renderModalReviewsList: (bookId) => {
@@ -3497,56 +3651,74 @@
                     return;
                 }
                 try {
-                    const meta = await DB.getStory(storyId);
-                    const pages = await DB.getPagesByStory(storyId);
-                    if (!pages || pages.length === 0) {
+                    const combined = await App.getCombinedLibraryBooks(true);
+                    const found = combined.find(b => b.id === storyId);
+                    const meta = found ? found.meta : await DB.getStory(storyId);
+                    const pages = found ? found.pages : await DB.getPagesByStory(storyId);
+                    if (!meta || !pages || pages.length === 0) {
                         UI.toast("Add at least 1 page before uploading to Online Library.");
                         return;
                     }
+                    meta.updatedAt = Date.now();
+                    meta.pageCount = pages.length;
+                    if (!meta.coverThumb && pages[0] && pages[0].image) meta.coverThumb = pages[0].image;
+                    await DB.putStory(meta);
                     UI.toast("Uploading module to Online Library...");
-                    await rtdb.ref(`cloud_library/${storyId}`).set({
+                    const payload = {
                         meta: meta,
                         pages: pages,
-                        publishedAt: Date.now()
-                    });
+                        publishedAt: Date.now(),
+                        updatedAt: meta.updatedAt
+                    };
+                    App.cloudBooksCache[storyId] = payload;
+                    await rtdb.ref(`cloud_library/${storyId}`).set(payload);
                     SoundFX.fanfare();
                     UI.toast(`"${meta.title || 'Storybook'}" is now LIVE in the Online Library!`);
                     App.renderDashboard();
+                    App.renderPublicLibrary();
                 } catch (err) {
                     UI.toast("Failed to upload module to cloud.");
                 }
             },
 
             unpublishFromCloud: (storyId) => {
-                UI.confirm("Remove this book from the public Online Library? (Your local draft will remain safe)", async () => {
+                UI.confirm("Remove this book from the public Online Library? (Your local copy in this browser will remain)", async () => {
                     if (rtdb) {
                         await rtdb.ref(`cloud_library/${storyId}`).remove();
+                        delete App.cloudBooksCache[storyId];
                         UI.toast("Removed from Online Library.");
                         App.renderDashboard();
+                        App.renderPublicLibrary();
                     }
                 });
             },
 
             publishAllToCloud: async () => {
                 if (!rtdb) { UI.toast("Cloud connection unavailable."); return; }
-                const stories = await DB.getAllStories();
-                if (!stories || stories.length === 0) { UI.toast("No local modules to upload."); return; }
+                const combined = await App.getCombinedLibraryBooks(true);
+                if (!combined || combined.length === 0) { UI.toast("No modules to upload."); return; }
                 let count = 0;
                 UI.toast("Syncing all modules to Online Library...");
-                for (const meta of stories) {
-                    const pages = await DB.getPagesByStory(meta.id);
-                    if (pages && pages.length > 0) {
-                        await rtdb.ref(`cloud_library/${meta.id}`).set({
-                            meta,
-                            pages,
-                            publishedAt: Date.now()
-                        });
+                for (const item of combined) {
+                    if (item.pages && item.pages.length > 0) {
+                        item.meta.updatedAt = Date.now();
+                        item.meta.pageCount = item.pages.length;
+                        await DB.putStory(item.meta);
+                        const payload = {
+                            meta: item.meta,
+                            pages: item.pages,
+                            publishedAt: item.publishedAt || Date.now(),
+                            updatedAt: item.meta.updatedAt
+                        };
+                        App.cloudBooksCache[item.id] = payload;
+                        await rtdb.ref(`cloud_library/${item.id}`).set(payload);
                         count++;
                     }
                 }
                 if (count > 0) SoundFX.fanfare();
                 UI.toast(`Synced ${count} module(s) to the Online Library!`);
                 App.renderDashboard();
+                App.renderPublicLibrary();
             },
 
             clearAllCloudAndLocalBooks: () => {
@@ -3583,7 +3755,7 @@
             },
 
             renderUtilizationReport: async () => {
-                const books = await App.getCombinedLibraryBooks();
+                const books = await App.getCombinedLibraryBooks(false);
                 const tbody = Utils.$('utilization-table-body');
                 if (!tbody) return;
 
@@ -3637,7 +3809,7 @@
             },
 
             exportUtilizationCSV: async () => {
-                const books = await App.getCombinedLibraryBooks();
+                const books = await App.getCombinedLibraryBooks(false);
                 const rows = [
                     ['Book ID', 'Book Title', 'Author', 'Pages', 'Active Live Readers', 'Total Reads', 'Total Downloads', 'Average Star Rating', 'Total Comments']
                 ];
@@ -3674,7 +3846,7 @@
                 const filterSelect = Utils.$('teacher-comment-filter');
                 if (!listEl || !filterSelect) return;
 
-                const books = await App.getCombinedLibraryBooks();
+                const books = await App.getCombinedLibraryBooks(true);
                 const bookTitleMap = {};
                 books.forEach(b => { bookTitleMap[b.id] = b.meta.title || 'Untitled Storybook'; });
 
@@ -3735,34 +3907,43 @@
                     }
                     App.renderTeacherCommentsModeration();
                     App.renderUtilizationReport();
-                    App.updateAllLiveCountersUI();
+                    App.renderPublicLibrary();
+                    App.renderDashboard();
                     UI.toast("Comment deleted.");
                 });
             },
 
             renderDashboard: async () => {
-                App.storyMetaList = await DB.getAllStories();
+                const combined = await App.getCombinedLibraryBooks(true);
+                App.storyMetaList = combined.map(item => ({ ...item.meta, _fullItem: item }));
                 const container = Utils.$('story-list-container'); container.innerHTML = '';
                 if (App.storyMetaList.length === 0) { Utils.show('empty-state'); return; }
                 Utils.hide('empty-state');
 
-                App.storyMetaList.forEach(meta => {
-                    const cover = meta.coverThumb ? `<img src="${meta.coverThumb}">` : `<svg class="svg-icon" style="width:50px;height:50px;color:rgba(255,255,255,0.2);"><use href="#icon-image"></use></svg>`;
+                App.storyMetaList.forEach(itemMeta => {
+                    const meta = itemMeta;
+                    const fullItem = itemMeta._fullItem;
+                    const coverImgSrc = meta.coverThumb || (fullItem && fullItem.pages && fullItem.pages[0] && fullItem.pages[0].image) || '';
+                    const cover = coverImgSrc ? `<img src="${coverImgSrc}">` : `<svg class="svg-icon" style="width:50px;height:50px;color:rgba(255,255,255,0.2);"><use href="#icon-image"></use></svg>`;
                     const isOnline = Boolean(App.cloudBooksCache && App.cloudBooksCache[meta.id]);
                     const onlineBadge = isOnline ? `<div class="cloud-status-badge">&#9729;&#65039; LIVE ONLINE</div>` : '';
+                    const st = App.getBookStatsSummary(meta.id);
+                    const ratingBadge = st.reviewCount > 0
+                        ? `<div class="badge" style="background: linear-gradient(135deg, #FFD700, #F59E0B); color: #0F172A;">&#11088; ${st.avgStars} (${st.reviewCount} Review${st.reviewCount === 1 ? '' : 's'})</div>`
+                        : '';
                     const card = document.createElement('div'); card.className = 'story-card';
                     card.innerHTML = `
-                        <div class="story-cover" onclick="App.openStory('${meta.id}')" style="cursor:pointer;">${cover}${onlineBadge}</div>
+                        <div class="story-cover" onclick="App.openStory('${meta.id}')" style="cursor:pointer;" title="Click to Edit Storybook">${cover}${ratingBadge}${onlineBadge}</div>
                         <div class="story-info">
                             <div class="story-title" title="${meta.title}">${meta.title || 'Untitled Module'}</div>
-                            <div class="story-meta">${meta.author || 'Unknown'} &bull; ${meta.pageCount} Pages</div>
+                            <div class="story-meta">${meta.author || 'Unknown'} &bull; ${meta.pageCount || (fullItem && fullItem.pages ? fullItem.pages.length : 0)} Pages &bull; &#128065;&#65039; ${st.totalReads} Reads</div>
                             <div class="flex gap-2" style="margin-top:auto; flex-wrap:wrap;">
                                 <button onclick="App.openStory('${meta.id}')" class="btn btn-glass" style="flex:1; padding:0.45rem; font-size:0.78rem;"><svg class="svg-icon"><use href="#icon-edit"></use></svg> Edit</button>
-                                <button onclick="App.uploadStoryToCloud('${meta.id}')" class="btn btn-publish" style="flex:1; padding:0.45rem; font-size:0.78rem;" title="Publish to Student Online Library">&#9729;&#65039; Upload Online</button>
+                                <button onclick="App.uploadStoryToCloud('${meta.id}')" class="btn btn-publish" style="flex:1; padding:0.45rem; font-size:0.78rem;" title="Sync / Publish to Student Online Library">&#9729;&#65039; ${isOnline ? 'Sync Online' : 'Upload Online'}</button>
                                 <button onclick="App.publishToHTML('${meta.id}')" class="btn btn-glass" style="flex:1; padding:0.45rem; font-size:0.78rem;"><svg class="svg-icon"><use href="#icon-publish"></use></svg> HTML</button>
                                 <button onclick="App.exportToReadi('${meta.id}')" class="btn btn-gold" style="flex:1; padding:0.45rem; font-size:0.78rem;"><svg class="svg-icon"><use href="#icon-save"></use></svg> Export</button>
                                 ${isOnline ? `<button onclick="App.unpublishFromCloud('${meta.id}')" class="btn btn-danger" style="padding:0.45rem 0.65rem; font-size:0.75rem;" title="Remove from Online Library">Unpublish</button>` : ''}
-                                <button onclick="App.deleteStory('${meta.id}')" class="btn btn-danger" style="padding:0.45rem; border-radius:10px;" title="Delete Local Module"><svg class="svg-icon"><use href="#icon-trash"></use></svg></button>
+                                <button onclick="App.deleteStory('${meta.id}')" class="btn btn-danger" style="padding:0.45rem; border-radius:10px;" title="Delete Module Everywhere"><svg class="svg-icon"><use href="#icon-trash"></use></svg></button>
                             </div>
                         </div>
                     `;
@@ -3771,7 +3952,10 @@
             },
             exportToReadi: async (storyId) => {
                 try {
-                    const meta = await DB.getStory(storyId); const pages = await DB.getPagesByStory(storyId);
+                    const combined = await App.getCombinedLibraryBooks(true);
+                    const found = combined.find(b => b.id === storyId);
+                    const meta = found ? found.meta : await DB.getStory(storyId);
+                    const pages = found ? found.pages : await DB.getPagesByStory(storyId);
                     const blob = new Blob([JSON.stringify({ type: 'readi_module', version: 2, meta, pages })], { type: 'application/json' });
                     const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url;
                     a.download = (meta.title || 'module').replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.readi';
@@ -3787,10 +3971,37 @@
                     try {
                         const data = JSON.parse(ev.target.result);
                         if (data.type !== 'readi_module') throw new Error();
-                        const newStoryId = 'mod_' + Date.now(); data.meta.id = newStoryId;
+                        const newStoryId = 'mod_' + Date.now();
+                        data.meta.id = newStoryId;
+                        data.meta.updatedAt = Date.now();
+                        data.meta.pageCount = (data.pages || []).length;
+                        if (!data.meta.coverThumb && data.pages && data.pages[0] && data.pages[0].image) {
+                            data.meta.coverThumb = data.pages[0].image;
+                        }
                         await DB.putStory(data.meta);
-                        for(let i=0; i<data.pages.length; i++) { let p = data.pages[i]; p.id = 'page_'+Date.now()+'_'+i; p.storyId = newStoryId; await DB.putPage(p); }
-                        App.renderDashboard(); UI.toast("Module imported successfully!");
+                        const savedPages = [];
+                        for(let i=0; i<data.pages.length; i++) {
+                            let p = data.pages[i];
+                            p.id = 'page_'+Date.now()+'_'+i;
+                            p.storyId = newStoryId;
+                            p.pageIndex = i;
+                            await DB.putPage(p);
+                            savedPages.push(p);
+                        }
+                        if (rtdb && savedPages.length > 0) {
+                            const payload = {
+                                meta: data.meta,
+                                pages: savedPages,
+                                publishedAt: Date.now(),
+                                updatedAt: data.meta.updatedAt
+                            };
+                            App.cloudBooksCache[newStoryId] = payload;
+                            await rtdb.ref(`cloud_library/${newStoryId}`).set(payload);
+                        }
+                        App.renderDashboard();
+                        App.renderPublicLibrary();
+                        SoundFX.fanfare();
+                        UI.toast("Module imported & synced to Online Cloud Repository!");
                     } catch(err) { UI.toast("Error importing file."); }
                 };
                 reader.readAsText(file); e.target.value = '';
@@ -3798,13 +4009,13 @@
 
             exportFullBackup: async () => {
                 try {
-                    const stories = await DB.getAllStories();
-                    if (!stories || stories.length === 0) { UI.toast("No modules to backup yet."); return; }
+                    const combined = await App.getCombinedLibraryBooks(true);
+                    if (!combined || combined.length === 0) { UI.toast("No modules to backup yet."); return; }
+                    const stories = combined.map(item => item.meta);
                     const allPages = [];
-                    for (const s of stories) {
-                        const pages = await DB.getPagesByStory(s.id);
-                        allPages.push(...pages);
-                    }
+                    combined.forEach(item => {
+                        if (item.pages) allPages.push(...item.pages);
+                    });
                     const blob = new Blob([JSON.stringify({ type: 'readi_full_backup', version: 1, stories, pages: allPages })], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a'); a.href = url;
@@ -3821,15 +4032,46 @@
                     try {
                         const data = JSON.parse(ev.target.result);
                         if (data.type === 'readi_full_backup' && Array.isArray(data.stories)) {
-                            for (const s of data.stories) { await DB.putStory(s); }
+                            for (const s of data.stories) {
+                                s.updatedAt = Date.now();
+                                await DB.putStory(s);
+                            }
                             for (const p of (data.pages || [])) { await DB.putPage(p); }
+                            if (rtdb) {
+                                for (const s of data.stories) {
+                                    const sPages = (data.pages || []).filter(p => p.storyId === s.id).sort((a,b) => (a.pageIndex||0)-(b.pageIndex||0));
+                                    if (sPages.length > 0) {
+                                        const payload = { meta: s, pages: sPages, publishedAt: Date.now(), updatedAt: s.updatedAt };
+                                        App.cloudBooksCache[s.id] = payload;
+                                        await rtdb.ref(`cloud_library/${s.id}`).set(payload);
+                                    }
+                                }
+                            }
                             App.renderDashboard();
-                            UI.toast(`Restored ${data.stories.length} modules!`);
+                            App.renderPublicLibrary();
+                            UI.toast(`Restored & synced ${data.stories.length} modules to Cloud!`);
                         } else if (data.type === 'readi_module') {
-                            const newStoryId = 'mod_' + Date.now(); data.meta.id = newStoryId;
+                            const newStoryId = 'mod_' + Date.now();
+                            data.meta.id = newStoryId;
+                            data.meta.updatedAt = Date.now();
                             await DB.putStory(data.meta);
-                            for(let i=0; i<data.pages.length; i++) { let p = data.pages[i]; p.id = 'page_'+Date.now()+'_'+i; p.storyId = newStoryId; await DB.putPage(p); }
-                            App.renderDashboard(); UI.toast("Module imported!");
+                            const savedPages = [];
+                            for(let i=0; i<data.pages.length; i++) {
+                                let p = data.pages[i];
+                                p.id = 'page_'+Date.now()+'_'+i;
+                                p.storyId = newStoryId;
+                                p.pageIndex = i;
+                                await DB.putPage(p);
+                                savedPages.push(p);
+                            }
+                            if (rtdb && savedPages.length > 0) {
+                                const payload = { meta: data.meta, pages: savedPages, publishedAt: Date.now(), updatedAt: data.meta.updatedAt };
+                                App.cloudBooksCache[newStoryId] = payload;
+                                await rtdb.ref(`cloud_library/${newStoryId}`).set(payload);
+                            }
+                            App.renderDashboard();
+                            App.renderPublicLibrary();
+                            UI.toast("Module imported & synced online!");
                         } else { throw new Error(); }
                     } catch (err) { UI.toast("Invalid backup file."); }
                 };
@@ -3839,7 +4081,10 @@
             /* --- PUBLISH THE 3D STANDALONE HTML --- */
             publishToHTML: async (storyId) => {
                 try {
-                    let meta = await DB.getStory(storyId); let pages = await DB.getPagesByStory(storyId); if ((!meta || !pages || pages.length === 0) && App.cloudBooksCache[storyId]) { meta = App.cloudBooksCache[storyId].meta; pages = App.cloudBooksCache[storyId].pages || []; }
+                    const combined = await App.getCombinedLibraryBooks(true);
+                    const found = combined.find(b => b.id === storyId);
+                    let meta = found ? found.meta : await DB.getStory(storyId);
+                    let pages = found ? found.pages : await DB.getPagesByStory(storyId);
                     if(!pages || pages.length === 0) { UI.toast("Add pages before publishing."); return; }
                     
                     const exportData = { meta, pages };
@@ -4077,27 +4322,51 @@
 
             createNewStory: async () => {
                 const newId = 'mod_' + Date.now();
-                App.currentStoryMeta = { id: newId, title: '', author: '', coverThumb: '', pageCount: 0, questions: [], certTemplate: null, certNameY: 52, activityBg: null };
+                App.currentStoryMeta = { id: newId, title: '', author: '', coverThumb: '', pageCount: 0, questions: [], certTemplate: null, certNameY: 52, activityBg: null, updatedAt: Date.now() };
                 App.currentStoryPages = [];
                 await DB.putStory(App.currentStoryMeta);
                 App.navigate('editor');
             },
 
             openStory: async (id) => {
-                const meta = App.storyMetaList.find(m => m.id === id);
-                if (meta) {
-                    App.currentStoryMeta = JSON.parse(JSON.stringify(meta));
+                const combined = await App.getCombinedLibraryBooks(true);
+                const found = combined.find(b => b.id === id);
+                if (found) {
+                    App.currentStoryMeta = JSON.parse(JSON.stringify(found.meta));
                     if(!App.currentStoryMeta.questions) App.currentStoryMeta.questions = [];
                     if(!App.currentStoryMeta.certNameY) App.currentStoryMeta.certNameY = 52;
-                    App.currentStoryPages = await DB.getPagesByStory(id);
+                    App.currentStoryPages = JSON.parse(JSON.stringify(found.pages || []));
+                    
+                    // Cache in local IndexedDB for seamless editing
+                    await DB.putStory(App.currentStoryMeta);
+                    await DB.deleteStoryPages(id);
+                    for (let i = 0; i < App.currentStoryPages.length; i++) {
+                        await DB.putPage(App.currentStoryPages[i]);
+                    }
                     App.navigate('editor');
+                } else {
+                    const localMeta = await DB.getStory(id);
+                    if (localMeta) {
+                        App.currentStoryMeta = localMeta;
+                        if(!App.currentStoryMeta.questions) App.currentStoryMeta.questions = [];
+                        if(!App.currentStoryMeta.certNameY) App.currentStoryMeta.certNameY = 52;
+                        App.currentStoryPages = await DB.getPagesByStory(id);
+                        App.navigate('editor');
+                    }
                 }
             },
 
             deleteStory: (id) => {
-                UI.confirm("Delete this entire module and all its pages?", async () => {
-                    await DB.deleteStory(id); await DB.deleteStoryPages(id); App.renderDashboard();
-                    UI.toast("Module deleted.");
+                UI.confirm("Delete this module from both the Teacher Master Repository and Online Library?", async () => {
+                    await DB.deleteStory(id);
+                    await DB.deleteStoryPages(id);
+                    if (rtdb) {
+                        try { await rtdb.ref(`cloud_library/${id}`).remove(); } catch (e) {}
+                    }
+                    delete App.cloudBooksCache[id];
+                    App.renderDashboard();
+                    App.renderPublicLibrary();
+                    UI.toast("Module deleted from Repository & Cloud.");
                 });
             },
 
@@ -4183,8 +4452,9 @@
                 if (!page || !page.hotspots[hIdx]) return;
                 page.hotspots[hIdx].syllables = newSyl.trim() || page.hotspots[hIdx].word;
                 await DB.putPage(page);
+                await App.autoSyncCurrentStoryToCloud(false);
                 App.renderEditorSyllableStudio();
-                UI.toast("Syllable blocks updated!");
+                UI.toast("Syllable blocks updated & synced!");
             },
 
             uploadSyllableAudioFromBuilder: async (e, pIdx, hIdx, sIdx) => {
@@ -4197,8 +4467,9 @@
                     if (!Array.isArray(hs.syllableAudios)) hs.syllableAudios = [];
                     hs.syllableAudios[sIdx] = base64;
                     await DB.putPage(page);
+                    await App.autoSyncCurrentStoryToCloud(false);
                     App.renderEditorSyllableStudio();
-                    UI.toast("Syllable block audio saved!");
+                    UI.toast("Syllable block audio saved & synced!");
                 } catch (err) {
                     UI.toast("Failed to upload syllable audio.");
                 }
@@ -4258,12 +4529,18 @@
                 App.currentStoryMeta.title = Utils.$('edit-title').value;
                 App.currentStoryMeta.author = Utils.$('edit-author').value;
                 App.currentStoryMeta.pageCount = App.currentStoryPages.length;
+                App.currentStoryMeta.updatedAt = Date.now();
                 if (App.currentStoryPages.length > 0) { App.currentStoryMeta.coverThumb = App.currentStoryPages[0].image; } 
                 else { App.currentStoryMeta.coverThumb = ''; }
                 await DB.putStory(App.currentStoryMeta);
+                await App.autoSyncCurrentStoryToCloud(false);
             },
 
-            closeEditor: async () => { await App.saveCurrentStoryMeta(); App.navigate('dashboard'); },
+            closeEditor: async () => {
+                await App.saveCurrentStoryMeta();
+                await App.autoSyncCurrentStoryToCloud(true);
+                App.navigate('dashboard');
+            },
 
             handleAddPage: async (e) => {
                 const file = e.target.files[0];
@@ -4272,8 +4549,10 @@
                     const base64 = await Utils.fileToBase64(file);
                     const newPage = { id: 'page_' + Date.now(), storyId: App.currentStoryMeta.id, pageIndex: App.currentStoryPages.length, image: base64, audio: null, hotspots: [] };
                     App.currentStoryPages.push(newPage);
-                    await DB.putPage(newPage); await App.saveCurrentStoryMeta(); App.renderPagesList();
-                    UI.toast("Page added!");
+                    await DB.putPage(newPage);
+                    await App.saveCurrentStoryMeta();
+                    App.renderPagesList();
+                    UI.toast("Page added & synced to Cloud!");
                 } catch(err) {}
                 e.target.value = '';
             },
@@ -4288,7 +4567,7 @@
 
                 App.currentStoryPages.forEach((page, index) => {
                     const div = document.createElement('div'); div.className = 'page-thumb';
-                    const hsBadge = page.hotspots.length > 0 ? `<div class="badge">${page.hotspots.length} Words</div>` : '';
+                    const hsBadge = (page.hotspots && page.hotspots.length > 0) ? `<div class="badge">${page.hotspots.length} Words</div>` : '';
                     const audioBadge = page.audio ? `<div class="badge" style="left:auto; right:8px; background:#3B82F6; color:white;"><svg class="svg-icon" style="width:12px;height:12px;"><use href="#icon-audio"></use></svg></div>` : '';
 
                     div.innerHTML = `
@@ -4311,8 +4590,10 @@
                     const pageId = App.currentStoryPages[index].id;
                     App.currentStoryPages.splice(index, 1);
                     for(let i=0; i<App.currentStoryPages.length; i++){ App.currentStoryPages[i].pageIndex = i; await DB.putPage(App.currentStoryPages[i]); }
-                    await DB.deletePage(pageId); await App.saveCurrentStoryMeta(); App.renderPagesList();
-                    UI.toast("Page removed.");
+                    await DB.deletePage(pageId);
+                    await App.saveCurrentStoryMeta();
+                    App.renderPagesList();
+                    UI.toast("Page removed & synced.");
                 });
             },
 
@@ -4331,7 +4612,7 @@
                 
                 await App.saveCurrentStoryMeta();
                 App.renderQuizList();
-                UI.toast("Question added!");
+                UI.toast("Question added & synced!");
 
                 Utils.$('q-text').value = ''; Utils.$('q-optA').value = ''; Utils.$('q-optB').value = ''; Utils.$('q-optC').value = '';
             },
@@ -4361,7 +4642,7 @@
                     App.currentStoryMeta.questions.splice(idx, 1);
                     await App.saveCurrentStoryMeta();
                     App.renderQuizList();
-                    UI.toast("Question deleted.");
+                    UI.toast("Question deleted & synced.");
                 });
             },
 
@@ -4387,7 +4668,12 @@
                 }
             },
 
-            closeHotspotEditor: async () => { const page = App.currentStoryPages[App.currentPageIndex]; await DB.putPage(page); App.navigate('editor'); },
+            closeHotspotEditor: async () => {
+                const page = App.currentStoryPages[App.currentPageIndex];
+                await DB.putPage(page);
+                await App.autoSyncCurrentStoryToCloud(true);
+                App.navigate('editor');
+            },
 
             handlePageAudioUpload: async (e) => {
                 const file = e.target.files[0]; if (!file) return;
@@ -4395,6 +4681,8 @@
                     const base64 = await Utils.fileToBase64(file);
                     App.currentStoryPages[App.currentPageIndex].audio = base64;
                     const preview = Utils.$('page-audio-preview'); preview.src = base64; Utils.show('page-audio-preview');
+                    await DB.putPage(App.currentStoryPages[App.currentPageIndex]);
+                    await App.autoSyncCurrentStoryToCloud(false);
                 } catch(err) {} e.target.value = '';
             },
 
@@ -4540,8 +4828,9 @@
                 const existIdx = page.hotspots.findIndex(h => h.id === App.tempHotspot.id);
                 if (existIdx >= 0) page.hotspots[existIdx] = App.tempHotspot; else page.hotspots.push(App.tempHotspot);
                 await DB.putPage(page);
+                await App.autoSyncCurrentStoryToCloud(false);
                 App.hideHotspotForm(); App.renderHotspots();
-                UI.toast("Interactive word & syllable audios saved!");
+                UI.toast("Interactive word & syllable audios saved & synced!");
             },
 
             renderHotspots: () => {
@@ -4573,10 +4862,12 @@
             },
             deleteHotspot: (id, e) => {
                 e.stopPropagation();
-                UI.confirm("Delete this annotation?", () => {
+                UI.confirm("Delete this annotation?", async () => {
                     App.currentStoryPages[App.currentPageIndex].hotspots = App.currentStoryPages[App.currentPageIndex].hotspots.filter(h => h.id !== id);
+                    await DB.putPage(App.currentStoryPages[App.currentPageIndex]);
+                    await App.autoSyncCurrentStoryToCloud(false);
                     App.hideHotspotForm(); App.renderHotspots();
-                    UI.toast("Word annotation deleted.");
+                    UI.toast("Word annotation deleted & synced.");
                 });
             },
 
