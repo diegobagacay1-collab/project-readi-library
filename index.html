@@ -2215,7 +2215,7 @@
         /* --- THE DYNAMIC VIEWER ENGINE --- */
         const Viewer = {
             vPages: [], idx: 0, activeAudio: null, activeBlobUrl: null, activeBufferSource: null, wowTimer: null, isFlipping: false, certName: '', certDataUrl: null, storyMeta: null,
-            quizScore: 0, quizAnswered: {}, wordsPracticed: 0, penActive: false, penDrawing: false, quizOptFontSize: parseFloat(localStorage.getItem('readi_quiz_opt_size')) || 1.45,
+            quizScore: 0, quizAnswered: {}, wordsPracticed: 0, penActive: false, penDrawing: false, quizOptFontSize: (() => { try { return parseFloat(localStorage.getItem('readi_quiz_opt_size')) || 1.45; } catch (e) { return 1.45; } })(),
 
             toggleQuizOptSettings: (e) => {
                 if (e) e.stopPropagation();
@@ -2235,22 +2235,57 @@
             },
 
             initData: (meta, pages) => {
-                Viewer.storyMeta = meta;
+                Viewer.storyMeta = meta || {};
                 Viewer.quizScore = 0;
                 Viewer.quizAnswered = {};
                 Viewer.wordsPracticed = 0;
                 Viewer.penActive = false;
                 let list = [];
-                pages.forEach(p => list.push({ type: 'image', data: p }));
+                const safePages = Array.isArray(pages) ? pages.filter(Boolean) : Object.values(pages || {}).filter(Boolean);
+                safePages.forEach(p => list.push({ type: 'image', data: p }));
                 let allWords = [];
-                pages.forEach(p => { if(p.hotspots) allWords.push(...p.hotspots); });
-                if(allWords.length > 0) list.push({ type: 'vocab', data: allWords });
-                if(meta.questions && meta.questions.length > 0) {
-                    meta.questions.forEach((q, i) => list.push({ type: 'quiz', data: q, qIdx: i, qTotal: meta.questions.length }));
+                safePages.forEach(p => {
+                    if (p && p.hotspots) {
+                        const hsArr = Array.isArray(p.hotspots) ? p.hotspots.filter(Boolean) : Object.values(p.hotspots || {}).filter(Boolean);
+                        allWords.push(...hsArr);
+                    }
+                });
+                if (allWords.length > 0) list.push({ type: 'vocab', data: allWords });
+                const safeQuestions = (meta && meta.questions)
+                    ? (Array.isArray(meta.questions) ? meta.questions.filter(Boolean) : Object.values(meta.questions || {}).filter(Boolean))
+                    : [];
+                if (safeQuestions.length > 0) {
+                    safeQuestions.forEach((q, i) => list.push({ type: 'quiz', data: q, qIdx: i, qTotal: safeQuestions.length }));
                 }
-                list.push({ type: 'cert', data: meta });
+                list.push({ type: 'cert', data: Viewer.storyMeta });
                 Viewer.vPages = list;
                 Viewer.initPenCanvas();
+                Viewer.initTouchSwipe();
+            },
+
+            initTouchSwipe: () => {
+                const stage = document.getElementById('student-page-wrapper');
+                if (!stage || stage.dataset.swipeBound === '1') return;
+                stage.dataset.swipeBound = '1';
+                let startX = 0, startY = 0;
+                stage.addEventListener('touchstart', (e) => {
+                    if (Viewer.penActive || !e.touches || !e.touches[0]) return;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                }, { passive: true });
+                stage.addEventListener('touchend', (e) => {
+                    if (Viewer.penActive || !e.changedTouches || !e.changedTouches[0]) return;
+                    const dx = e.changedTouches[0].clientX - startX;
+                    const dy = e.changedTouches[0].clientY - startY;
+                    const st = document.getElementById('view-student');
+                    const isRotated = st && st.classList.contains('auto-landscape') && window.innerWidth <= 860 && window.innerHeight > window.innerWidth;
+                    const delta = isRotated ? dy : dx;
+                    const cross = isRotated ? dx : dy;
+                    if (Math.abs(delta) > 55 && Math.abs(delta) > Math.abs(cross) * 1.2) {
+                        if (delta < 0) Viewer.nextPage();
+                        else Viewer.prevPage();
+                    }
+                }, { passive: true });
             },
 
             initPenCanvas: () => {
@@ -2916,10 +2951,14 @@
                     }
                 };
 
-                if (curPageInfo.type === 'image') {
+                if (curPageInfo.type === 'image' && direction !== null) {
+                    let flipped = false;
+                    const safeFlip = () => { if (!flipped) { flipped = true; executeFlip(); } };
                     const img = new Image();
-                    img.onload = executeFlip;
+                    img.onload = safeFlip;
+                    img.onerror = safeFlip;
                     img.src = curPageInfo.data.image;
+                    setTimeout(safeFlip, 180);
                 } else {
                     executeFlip();
                 }
@@ -4128,7 +4167,8 @@
                     const combined = await App.getCombinedLibraryBooks(true);
                     const found = combined.find(b => b.id === storyId);
                     let meta = found ? found.meta : await DB.getStory(storyId);
-                    let pages = found ? found.pages : await DB.getPagesByStory(storyId);
+                    let rawPages = found ? found.pages : await DB.getPagesByStory(storyId);
+                    let pages = Array.isArray(rawPages) ? rawPages.filter(Boolean) : Object.values(rawPages || {}).filter(Boolean);
                     if(!pages || pages.length === 0) { UI.toast("Add pages before publishing."); return; }
                     
                     const exportData = { meta, pages };
@@ -4311,10 +4351,11 @@
         };
         const Viewer = {
             vPages: [], idx: 0, activeAudio: null, activeBlobUrl: null, activeBufferSource: null, wowTimer: null, isFlipping: false, certName: '', certDataUrl: null, storyMeta: null,
-            quizScore: 0, quizAnswered: {}, wordsPracticed: 0, penActive: false, penDrawing: false, quizOptFontSize: parseFloat(localStorage.getItem('readi_quiz_opt_size')) || 1.45,
+            quizScore: 0, quizAnswered: {}, wordsPracticed: 0, penActive: false, penDrawing: false, quizOptFontSize: (() => { try { return parseFloat(localStorage.getItem('readi_quiz_opt_size')) || 1.45; } catch (e) { return 1.45; } })(),
             toggleQuizOptSettings: ${Viewer.toggleQuizOptSettings.toString()},
             setQuizOptFontSize: ${Viewer.setQuizOptFontSize.toString()},
             initData: ${Viewer.initData.toString()},
+            initTouchSwipe: ${Viewer.initTouchSwipe.toString()},
             initPenCanvas: ${Viewer.initPenCanvas.toString()},
             togglePen: ${Viewer.togglePen.toString()},
             clearPen: ${Viewer.clearPen.toString()},
@@ -4341,10 +4382,15 @@
             triggerWow: ${Viewer.triggerWow.toString()},
             closeWowPopup: ${Viewer.closeWowPopup.toString()}
         };
-        window.onload = () => {
+        let __readiBooted = false;
+        const bootStandaloneBook = () => {
+            if (__readiBooted) return;
+            __readiBooted = true;
             const unlockMobileAudio = () => {
-                const ctx = SoundFX.getCtx();
-                if (ctx && ctx.state === 'suspended') ctx.resume().catch(()=>{});
+                try {
+                    const ctx = SoundFX.getCtx();
+                    if (ctx && ctx.state === 'suspended') ctx.resume().catch(()=>{});
+                } catch (e) {}
             };
             window.addEventListener('touchstart', unlockMobileAudio, { passive: true });
             window.addEventListener('touchend', unlockMobileAudio, { passive: true });
@@ -4358,6 +4404,11 @@
                 else if (e.key === 'Escape') Viewer.closeWowPopup();
             });
         };
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setTimeout(bootStandaloneBook, 10);
+        }
+        document.addEventListener('DOMContentLoaded', bootStandaloneBook);
+        window.addEventListener('load', bootStandaloneBook);
     <\/script>
 </body>
 </html>`;
