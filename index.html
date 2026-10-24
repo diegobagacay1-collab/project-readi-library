@@ -1056,6 +1056,12 @@
         .quiz-option-A { background: linear-gradient(135deg, #F43F5E 0%, #BE123C 100%) !important; border-bottom: 8px solid #881337 !important; box-shadow: 0 10px 24px rgba(190, 18, 60, 0.45); }
         .quiz-option-B { background: linear-gradient(135deg, #0EA5E9 0%, #0369A1 100%) !important; border-bottom: 8px solid #0C4A6E !important; box-shadow: 0 10px 24px rgba(3, 105, 161, 0.45); }
         .quiz-option-C { background: linear-gradient(135deg, #8B5CF6 0%, #5B21B6 100%) !important; border-bottom: 8px solid #3B0764 !important; box-shadow: 0 10px 24px rgba(91, 33, 182, 0.45); }
+        .quiz-option-D { background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%) !important; border-bottom: 8px solid #78350F !important; box-shadow: 0 10px 24px rgba(180, 83, 9, 0.45); }
+        .quiz-opt-settings-wrap { position: absolute; bottom: 14px; right: 18px; z-index: 45; display: flex; align-items: center; gap: 0.45rem; }
+        .quiz-opt-settings-btn { width: 34px; height: 34px; border-radius: 50%; background: rgba(15, 23, 42, 0.82); border: 2px solid rgba(255, 215, 0, 0.7); color: #FFD700; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); transition: transform 0.2s ease, background 0.2s ease; }
+        .quiz-opt-settings-btn:hover { transform: scale(1.1); background: rgba(30, 41, 59, 0.96); }
+        .quiz-opt-settings-panel { background: rgba(15, 23, 42, 0.95); border: 2px solid #FFD700; border-radius: 99px; padding: 0.25rem 0.75rem; display: flex; align-items: center; gap: 0.45rem; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65); font-size: 0.75rem; font-weight: 800; color: #FEF08A; }
+        .quiz-opt-settings-panel input[type="range"] { width: 85px; accent-color: #FFD700; cursor: pointer; }
         .quiz-option:hover { transform: translateY(-4px) scale(1.015); filter: brightness(1.1); }
         
         .quiz-opt-letter {
@@ -1731,11 +1737,16 @@
                             <input type="text" id="q-optC" class="form-control" placeholder="Answer C">
                         </div>
                         <div class="form-group">
+                            <label class="form-label">Option D</label>
+                            <input type="text" id="q-optD" class="form-control" placeholder="Answer D">
+                        </div>
+                        <div class="form-group">
                             <label class="form-label">Correct Answer</label>
                             <select id="q-correct" class="form-control">
                                 <option value="A">Option A</option>
                                 <option value="B">Option B</option>
                                 <option value="C">Option C</option>
+                                <option value="D">Option D</option>
                             </select>
                         </div>
                         <button onclick="App.saveQuestion()" class="btn btn-gold w-full">Add Question</button>
@@ -2204,7 +2215,24 @@
         /* --- THE DYNAMIC VIEWER ENGINE --- */
         const Viewer = {
             vPages: [], idx: 0, activeAudio: null, activeBlobUrl: null, activeBufferSource: null, wowTimer: null, isFlipping: false, certName: '', certDataUrl: null, storyMeta: null,
-            quizScore: 0, quizAnswered: {}, wordsPracticed: 0, penActive: false, penDrawing: false,
+            quizScore: 0, quizAnswered: {}, wordsPracticed: 0, penActive: false, penDrawing: false, quizOptFontSize: parseFloat(localStorage.getItem('readi_quiz_opt_size')) || 1.45,
+
+            toggleQuizOptSettings: (e) => {
+                if (e) e.stopPropagation();
+                const panel = document.getElementById('quiz-opt-size-panel');
+                if (panel) panel.classList.toggle('hidden');
+            },
+
+            setQuizOptFontSize: (val) => {
+                const sizeRem = parseFloat(val) || 1.45;
+                Viewer.quizOptFontSize = sizeRem;
+                try { localStorage.setItem('readi_quiz_opt_size', sizeRem); } catch (e) {}
+                const lbl = document.getElementById('quiz-opt-size-val');
+                if (lbl) lbl.textContent = Math.round((sizeRem / 1.45) * 100) + '%';
+                document.querySelectorAll('#student-page-wrapper .quiz-option .quiz-opt-text').forEach(el => {
+                    el.style.fontSize = sizeRem + 'rem';
+                });
+            },
 
             initData: (meta, pages) => {
                 Viewer.storyMeta = meta;
@@ -2490,6 +2518,9 @@
                         wrapper.style.backgroundImage = `linear-gradient(rgba(15, 23, 42, 0.35), rgba(15, 23, 42, 0.35)), url('${Viewer.storyMeta.activityBg}')`;
                     }
                     const q = page.data;
+                    const optSize = Viewer.quizOptFontSize || 1.45;
+                    const pct = Math.round((optSize / 1.45) * 100);
+                    const hasOptD = q.optD !== undefined && String(q.optD).trim() !== '';
                     wrapper.innerHTML = `
                         <div class="html-book-page-header"><span>&#127919;</span> Comprehension Challenge <span>&#10024;</span></div>
                         <div class="quiz-container">
@@ -2499,17 +2530,30 @@
                             </div>
                             <button class="quiz-option quiz-option-A" onclick="Viewer.answerQuiz(this, '${q.correct}', 'A', ${page.qIdx}, ${page.qTotal})">
                                 <span class="quiz-opt-letter">A</span>
-                                <span>${q.optA}</span>
+                                <span class="quiz-opt-text" style="font-size: ${optSize}rem;">${q.optA}</span>
                             </button>
                             <button class="quiz-option quiz-option-B" onclick="Viewer.answerQuiz(this, '${q.correct}', 'B', ${page.qIdx}, ${page.qTotal})">
                                 <span class="quiz-opt-letter">B</span>
-                                <span>${q.optB}</span>
+                                <span class="quiz-opt-text" style="font-size: ${optSize}rem;">${q.optB}</span>
                             </button>
                             <button class="quiz-option quiz-option-C" onclick="Viewer.answerQuiz(this, '${q.correct}', 'C', ${page.qIdx}, ${page.qTotal})">
                                 <span class="quiz-opt-letter">C</span>
-                                <span>${q.optC}</span>
+                                <span class="quiz-opt-text" style="font-size: ${optSize}rem;">${q.optC}</span>
                             </button>
+                            ${hasOptD ? `
+                            <button class="quiz-option quiz-option-D" onclick="Viewer.answerQuiz(this, '${q.correct}', 'D', ${page.qIdx}, ${page.qTotal})">
+                                <span class="quiz-opt-letter">D</span>
+                                <span class="quiz-opt-text" style="font-size: ${optSize}rem;">${q.optD}</span>
+                            </button>
+                            ` : ''}
                             <div class="quiz-feedback" id="quiz-feedback-msg"></div>
+                        </div>
+                        <div class="quiz-opt-settings-wrap" onclick="event.stopPropagation()">
+                            <div id="quiz-opt-size-panel" class="quiz-opt-settings-panel hidden">
+                                <span>Option Text: <b id="quiz-opt-size-val">${pct}%</b></span>
+                                <input type="range" min="0.95" max="2.2" step="0.05" value="${optSize}" oninput="Viewer.setQuizOptFontSize(this.value)">
+                            </div>
+                            <button type="button" class="quiz-opt-settings-btn" onclick="Viewer.toggleQuizOptSettings(event)" title="Adjust Option Text Size">&#9881;&#65039;</button>
                         </div>
                     `;
                 }
@@ -4144,6 +4188,11 @@
         .quiz-option-A { background: linear-gradient(135deg, #F43F5E 0%, #BE123C 100%) !important; border-bottom: 8px solid #881337 !important; }
         .quiz-option-B { background: linear-gradient(135deg, #0EA5E9 0%, #0369A1 100%) !important; border-bottom: 8px solid #0C4A6E !important; }
         .quiz-option-C { background: linear-gradient(135deg, #8B5CF6 0%, #5B21B6 100%) !important; border-bottom: 8px solid #3B0764 !important; }
+        .quiz-option-D { background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%) !important; border-bottom: 8px solid #78350F !important; }
+        .quiz-opt-settings-wrap { position: absolute; bottom: 14px; right: 18px; z-index: 45; display: flex; align-items: center; gap: 0.45rem; }
+        .quiz-opt-settings-btn { width: 34px; height: 34px; border-radius: 50%; background: rgba(15, 23, 42, 0.82); border: 2px solid rgba(255, 215, 0, 0.7); color: #FFD700; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
+        .quiz-opt-settings-panel { background: rgba(15, 23, 42, 0.95); border: 2px solid #FFD700; border-radius: 99px; padding: 0.25rem 0.75rem; display: flex; align-items: center; gap: 0.45rem; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65); font-size: 0.75rem; font-weight: 800; color: #FEF08A; }
+        .quiz-opt-settings-panel input[type="range"] { width: 85px; accent-color: #FFD700; cursor: pointer; }
         .quiz-opt-letter { width: 54px; height: 54px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 900; color: #1E1B4B !important; background: linear-gradient(180deg, #FEF08A 0%, #FACC15 100%) !important; border: 3px solid #FFFFFF; flex-shrink: 0; text-shadow: none !important; box-shadow: 0 4px 10px rgba(0,0,0,0.35); }
         .quiz-option.correct { background: linear-gradient(135deg, #10B981 0%, #047857 100%) !important; color: #FFFFFF !important; border-color: #FEF08A !important; border-bottom-color: #064E3B !important; transform: scale(1.03); }
         .quiz-option.correct .quiz-opt-letter { background: #FFFFFF !important; color: #047857 !important; }
@@ -4262,7 +4311,9 @@
         };
         const Viewer = {
             vPages: [], idx: 0, activeAudio: null, activeBlobUrl: null, activeBufferSource: null, wowTimer: null, isFlipping: false, certName: '', certDataUrl: null, storyMeta: null,
-            quizScore: 0, quizAnswered: {}, wordsPracticed: 0, penActive: false, penDrawing: false,
+            quizScore: 0, quizAnswered: {}, wordsPracticed: 0, penActive: false, penDrawing: false, quizOptFontSize: parseFloat(localStorage.getItem('readi_quiz_opt_size')) || 1.45,
+            toggleQuizOptSettings: ${Viewer.toggleQuizOptSettings.toString()},
+            setQuizOptFontSize: ${Viewer.setQuizOptFontSize.toString()},
             initData: ${Viewer.initData.toString()},
             initPenCanvas: ${Viewer.initPenCanvas.toString()},
             togglePen: ${Viewer.togglePen.toString()},
@@ -4603,18 +4654,19 @@
                 const optA = Utils.$('q-optA').value.trim();
                 const optB = Utils.$('q-optB').value.trim();
                 const optC = Utils.$('q-optC').value.trim();
+                const optD = Utils.$('q-optD') ? Utils.$('q-optD').value.trim() : '';
                 const correct = Utils.$('q-correct').value;
 
-                if(!qText || !optA || !optB || !optC) { UI.toast("Please fill all question fields."); return; }
+                if(!qText || !optA || !optB || !optC || !optD) { UI.toast("Please fill all question fields (Options A, B, C, and D)."); return; }
 
                 if(!App.currentStoryMeta.questions) App.currentStoryMeta.questions = [];
-                App.currentStoryMeta.questions.push({ id: 'q_'+Date.now(), qText, optA, optB, optC, correct });
+                App.currentStoryMeta.questions.push({ id: 'q_'+Date.now(), qText, optA, optB, optC, optD, correct });
                 
                 await App.saveCurrentStoryMeta();
                 App.renderQuizList();
                 UI.toast("Question added & synced!");
 
-                Utils.$('q-text').value = ''; Utils.$('q-optA').value = ''; Utils.$('q-optB').value = ''; Utils.$('q-optC').value = '';
+                Utils.$('q-text').value = ''; Utils.$('q-optA').value = ''; Utils.$('q-optB').value = ''; Utils.$('q-optC').value = ''; if (Utils.$('q-optD')) Utils.$('q-optD').value = '';
             },
 
             renderQuizList: () => {
