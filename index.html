@@ -5159,3 +5159,900 @@
 })();
 </script>
 </html>
+<!-- ============================================================================
+     PROJECT READi COMPLETE UPGRADE MODULE (100% DROP-IN ENHANCEMENT)
+     - Proponents: Melanie T. Tinonas • Vanessa Infante-Villaruz • Froilan Bhoyd P. Ceriales
+     - Lead Web Application Architect & Cloud Integrator: Froilan Bhoyd P. Ceriales
+     - Features:
+       1. Updated Proponents & Web Application Architect Credits Footer
+       2. R.A. 8293 Intellectual Property Undertaking on Website Password Gate
+       3. Password Gate + IP Undertaking + Watermark + Anti-Copy inside Downloaded HTML Books
+       4. Category (Kindergarten, Key Stage 1, Key Stage 2) & Language Classification + Filters
+     ============================================================================ -->
+<style>
+    .ip-undertaking-box {
+        background: rgba(9, 13, 26, 0.92);
+        border: 2px solid rgba(255, 215, 0, 0.55);
+        border-left: 6px solid #FFD700;
+        border-radius: 16px;
+        padding: 0.9rem 1.1rem;
+        margin: 0.85rem 0 0.95rem 0;
+        text-align: left;
+        font-size: 0.81rem;
+        color: #E2E8F0;
+        line-height: 1.45;
+        box-shadow: inset 0 0 18px rgba(255, 215, 0, 0.08);
+    }
+    .ip-undertaking-title {
+        font-weight: 900;
+        color: #FFD700;
+        font-size: 0.77rem;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 0.35rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .ip-undertaking-check-label {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.65rem;
+        margin-top: 0.6rem;
+        padding-top: 0.55rem;
+        border-top: 1px dashed rgba(255, 255, 255, 0.22);
+        cursor: pointer;
+        font-weight: 800;
+        color: #FEF08A;
+        font-size: 0.81rem;
+        user-select: none;
+    }
+    .ip-undertaking-check-label input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        margin-top: 2px;
+        accent-color: #FFD700;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+    .classification-badges-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        align-items: center;
+        margin-bottom: 0.4rem;
+    }
+    .category-pill-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.28rem 0.8rem;
+        border-radius: 99px;
+        font-size: 0.75rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 1.5px solid #FFFFFF;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+    }
+    .category-kinder {
+        background: linear-gradient(135deg, #EC4899 0%, #BE185D 100%);
+        color: #FFFFFF;
+    }
+    .category-ks1 {
+        background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%);
+        color: #FFFFFF;
+    }
+    .category-ks2 {
+        background: linear-gradient(135deg, #8B5CF6 0%, #5B21B6 100%);
+        color: #FFFFFF;
+    }
+    .language-pill-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.28rem 0.8rem;
+        border-radius: 99px;
+        font-size: 0.75rem;
+        font-weight: 900;
+        letter-spacing: 0.4px;
+        background: linear-gradient(135deg, #0284C7 0%, #1E3A8A 100%);
+        color: #E0F2FE;
+        border: 1.5px solid #7DD3FC;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+    }
+    .ip-card-tag {
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: #FEF08A;
+        background: rgba(15, 23, 42, 0.88);
+        border: 1px solid rgba(255, 215, 0, 0.38);
+        border-radius: 10px;
+        padding: 0.34rem 0.65rem;
+        text-align: center;
+        letter-spacing: 0.3px;
+        margin-top: 0.35rem;
+    }
+    .filter-select-pill {
+        background: rgba(9, 13, 26, 0.92) !important;
+        border: 2px solid rgba(255, 215, 0, 0.65) !important;
+        color: #FEF08A !important;
+        font-weight: 800 !important;
+        font-size: 0.94rem !important;
+        padding: 0.65rem 1.1rem !important;
+        border-radius: 99px !important;
+        width: auto !important;
+        min-width: 195px;
+        cursor: pointer;
+    }
+    .filter-select-pill.lang-select {
+        border-color: rgba(56, 189, 248, 0.75) !important;
+        color: #BAE6FD !important;
+    }
+    .quick-classify-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.4rem;
+        margin-bottom: 0.75rem;
+        background: rgba(15, 23, 42, 0.8);
+        padding: 0.45rem;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    .quick-classify-select {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        color: #F8FAFC;
+        border: 1px solid rgba(255, 215, 0, 0.5);
+        border-radius: 7px;
+        padding: 0.32rem 0.4rem;
+        font-size: 0.74rem;
+        font-weight: 800;
+        cursor: pointer;
+    }
+</style>
+
+<script>
+(function() {
+    const applyReadiUpgrades = () => {
+        if (typeof App === 'undefined' || typeof Viewer === 'undefined' || typeof Utils === 'undefined') {
+            setTimeout(applyReadiUpgrades, 50);
+            return;
+        }
+
+        /* -------------------------------------------------------------------------
+           1. UPDATE ALL INNOVATION CREDITS FOOTERS
+           ------------------------------------------------------------------------- */
+        document.querySelectorAll('.innovation-credits-footer').forEach(footer => {
+            footer.innerHTML = `
+                <div class="footer-line-main">PROJECT READi | Innovation Proponents, Creators &amp; Teacher-Authors: Melanie T. Tinonas &bull; Vanessa Infante-Villaruz &bull; Froilan Bhoyd P. Ceriales</div>
+                <div class="footer-line-adviser">Lead Web Application Architect, Cloud Systems Integrator &amp; AI Prompt Engineer (GitHub &bull; Netlify &bull; Google Firebase): Froilan Bhoyd P. Ceriales</div>
+                <div class="footer-line-sub">Project Adviser &amp; Consultant: Maera G. Mamuyac, Principal | Original Localized Stories &amp; Audio Protected under R.A. 8293 (Intellectual Property Code of the Philippines)</div>
+            `;
+        });
+
+        /* -------------------------------------------------------------------------
+           2. INJECT INTELLECTUAL PROPERTY UNDERTAKING INTO WEBSITE PASSWORD GATE
+           ------------------------------------------------------------------------- */
+        const errEl = document.getElementById('site-privacy-error');
+        if (errEl && !document.getElementById('site-ip-agreement-checkbox')) {
+            const ipBox = document.createElement('div');
+            ipBox.className = 'ip-undertaking-box';
+            ipBox.innerHTML = `
+                <div class="ip-undertaking-title">&#128737;&#65039; Intellectual Property &amp; Anti-Plagiarism Undertaking (R.A. 8293)</div>
+                <div>
+                    All localized storybooks, illustrations, read-aloud audio, and interactive modules in <b>PROJECT READi</b> are original intellectual creations of Proponents <b>Melanie T. Tinonas, Vanessa Infante-Villaruz &amp; Froilan Bhoyd P. Ceriales</b> (Junob Elementary School) and are automatically protected upon creation under <b>Sec. 172.1 of R.A. 8293</b>.
+                </div>
+                <label class="ip-undertaking-check-label">
+                    <input type="checkbox" id="site-ip-agreement-checkbox" checked>
+                    <span>I agree to the Terms of Authorized Educational Use and undertake NOT to copy, plagiarize, alter, or redistribute any storybook or downloaded HTML module as my own.</span>
+                </label>
+            `;
+            errEl.parentNode.insertBefore(ipBox, errEl);
+            const unlockBtn = errEl.nextElementSibling;
+            if (unlockBtn && unlockBtn.tagName === 'BUTTON') {
+                unlockBtn.innerHTML = '&#128275; Agree, Unlock &amp; Enter Website';
+            }
+        }
+
+        /* -------------------------------------------------------------------------
+           3. INJECT CATEGORY & LANGUAGE FILTERS IN PUBLIC LIBRARY & TEACHER STUDIO
+           ------------------------------------------------------------------------- */
+        // A. Public Student Library Control Ribbon
+        const searchInput = document.getElementById('student-search-input');
+        if (searchInput && !document.getElementById('student-category-filter')) {
+            searchInput.placeholder = "🔍 Search storybooks by title, author, category, or language...";
+            const filterWrap = document.createElement('div');
+            filterWrap.className = 'flex gap-2';
+            filterWrap.style.flexWrap = 'wrap';
+            filterWrap.innerHTML = `
+                <select id="student-category-filter" class="form-control filter-select-pill" onchange="App.renderPublicLibrary()" title="Filter by Learner Category / Key Stage">
+                    <option value="ALL">&#127891; All Categories (K–G6)</option>
+                    <option value="Kindergarten">&#129528; Kindergarten</option>
+                    <option value="Key Stage 1">&#128215; Key Stage 1 (Grades 1–3)</option>
+                    <option value="Key Stage 2">&#128216; Key Stage 2 (Grades 4–6)</option>
+                </select>
+                <select id="student-language-filter" class="form-control filter-select-pill lang-select" onchange="App.renderPublicLibrary()" title="Filter by Story Language">
+                    <option value="ALL">&#127760; All Languages</option>
+                    <option value="Sinugbuanong Binisaya">&#128483;&#65039; Sinugbuanong Binisaya</option>
+                    <option value="Filipino">&#127477;&#127469; Filipino</option>
+                    <option value="English">&#128218; English</option>
+                    <option value="Multilingual">&#10024; Multilingual</option>
+                </select>
+            `;
+            const ribbon = searchInput.closest('.control-ribbon');
+            const sortGroup = ribbon ? ribbon.querySelector('.sort-pill-group') : null;
+            if (ribbon && sortGroup) {
+                ribbon.insertBefore(filterWrap, sortGroup);
+            }
+        }
+
+        // B. Teacher Master Repository Filter Toolbar
+        const storyListContainer = document.getElementById('story-list-container');
+        if (storyListContainer && !document.getElementById('teacher-category-filter')) {
+            const teacherFilterBar = document.createElement('div');
+            teacherFilterBar.className = 'flex gap-3 items-center';
+            teacherFilterBar.style.cssText = 'flex-wrap: wrap; margin-bottom: 1.25rem; background: rgba(9, 13, 26, 0.55); padding: 0.75rem 1rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.16);';
+            teacherFilterBar.innerHTML = `
+                <span style="font-size: 0.82rem; font-weight: 900; color: #CBD5E1; text-transform: uppercase; letter-spacing: 0.6px;">&#128269; Classify &amp; Filter Repository:</span>
+                <select id="teacher-category-filter" class="form-control filter-select-pill" onchange="App.renderDashboard()" style="padding: 0.5rem 0.9rem !important; font-size: 0.88rem !important;">
+                    <option value="ALL">&#127891; All Categories (K–G6)</option>
+                    <option value="Kindergarten">&#129528; Kindergarten</option>
+                    <option value="Key Stage 1">&#128215; Key Stage 1 (Grades 1–3)</option>
+                    <option value="Key Stage 2">&#128216; Key Stage 2 (Grades 4–6)</option>
+                </select>
+                <select id="teacher-language-filter" class="form-control filter-select-pill lang-select" onchange="App.renderDashboard()" style="padding: 0.5rem 0.9rem !important; font-size: 0.88rem !important;">
+                    <option value="ALL">&#127760; All Languages</option>
+                    <option value="Sinugbuanong Binisaya">&#128483;&#65039; Sinugbuanong Binisaya</option>
+                    <option value="Filipino">&#127477;&#127469; Filipino</option>
+                    <option value="English">&#128218; English</option>
+                    <option value="Multilingual">&#10024; Multilingual</option>
+                </select>
+            `;
+            storyListContainer.parentNode.insertBefore(teacherFilterBar, storyListContainer);
+        }
+
+        // C. Teacher Module Builder Metadata Fields (#view-editor)
+        const editAuthorInp = document.getElementById('edit-author');
+        if (editAuthorInp && !document.getElementById('edit-category')) {
+            const authorGroup = editAuthorInp.closest('.form-group');
+            if (authorGroup) {
+                authorGroup.style.marginBottom = '1.25rem';
+                const catGroup = document.createElement('div');
+                catGroup.className = 'form-group';
+                catGroup.innerHTML = `
+                    <label class="form-label" style="color: #FFD700;">&#127891; Learner Category / Key Stage</label>
+                    <select id="edit-category" class="form-control" onchange="App.saveCurrentStoryMeta()" style="font-weight: 800; border-color: rgba(255,215,0,0.55);">
+                        <option value="Kindergarten">Kindergarten</option>
+                        <option value="Key Stage 1" selected>Key Stage 1 (Grades 1–3)</option>
+                        <option value="Key Stage 2">Key Stage 2 (Grades 4–6)</option>
+                    </select>
+                `;
+                const langGroup = document.createElement('div');
+                langGroup.className = 'form-group';
+                langGroup.style.marginBottom = '0';
+                langGroup.innerHTML = `
+                    <label class="form-label" style="color: #38BDF8;">&#127760; Story Language / Pinulongan</label>
+                    <select id="edit-language" class="form-control" onchange="App.saveCurrentStoryMeta()" style="font-weight: 800; border-color: rgba(56,189,248,0.55);">
+                        <option value="Sinugbuanong Binisaya" selected>Sinugbuanong Binisaya</option>
+                        <option value="Filipino">Filipino</option>
+                        <option value="English">English</option>
+                        <option value="Multilingual">Multilingual</option>
+                    </select>
+                `;
+                authorGroup.parentNode.appendChild(catGroup);
+                authorGroup.parentNode.appendChild(langGroup);
+            }
+        }
+
+        /* -------------------------------------------------------------------------
+           4. UPGRADE APP METHODS FOR IP GATE, CATEGORY, LANGUAGE & SECURE HTML EXPORT
+           ------------------------------------------------------------------------- */
+        App.getCategoryBadgeClass = (category) => {
+            const c = (category || 'Key Stage 1').toLowerCase();
+            if (c.includes('kinder')) return 'category-kinder';
+            if (c.includes('stage 2')) return 'category-ks2';
+            return 'category-ks1';
+        };
+
+        App.quickUpdateBookClassification = async (storyId, field, value) => {
+            try {
+                const combined = await App.getCombinedLibraryBooks(true);
+                const found = combined.find(b => b.id === storyId);
+                let meta = found ? JSON.parse(JSON.stringify(found.meta)) : await DB.getStory(storyId);
+                let pages = found ? found.pages : await DB.getPagesByStory(storyId);
+                if (!meta) return;
+                meta[field] = value;
+                meta.updatedAt = Date.now();
+                await DB.putStory(meta);
+                if (typeof rtdb !== 'undefined' && rtdb && pages && pages.length > 0) {
+                    const payload = {
+                        meta: meta,
+                        pages: pages,
+                        publishedAt: (found && found.publishedAt) ? found.publishedAt : Date.now(),
+                        updatedAt: meta.updatedAt
+                    };
+                    App.cloudBooksCache[storyId] = payload;
+                    await rtdb.ref(`cloud_library/${storyId}`).set(payload);
+                }
+                App.renderDashboard();
+                App.renderPublicLibrary();
+                App.renderUtilizationReport();
+                UI.toast(`Updated ${field === 'category' ? 'Category' : 'Language'} to "${value}"!`);
+            } catch (e) {
+                UI.toast("Failed to update classification.");
+            }
+        };
+
+        // Enforce IP Undertaking Checkbox on Website Privacy Gate
+        App.verifySitePrivacyPassword = () => {
+            const inp = Utils.$('site-privacy-password-input');
+            const err = Utils.$('site-privacy-error');
+            const gate = Utils.$('website-privacy-gate');
+            const ipCheck = Utils.$('site-ip-agreement-checkbox');
+            const val = inp ? inp.value.trim() : '';
+            if (ipCheck && !ipCheck.checked) {
+                SoundFX.wrong();
+                if (err) {
+                    err.innerHTML = '&#9888;&#65039; Please check the Intellectual Property Undertaking agreement box before entering.';
+                    err.classList.remove('hidden');
+                }
+                UI.toast("Please agree to the Intellectual Property Undertaking first.");
+                return;
+            }
+            if (val === '119948') {
+                if (err) err.classList.add('hidden');
+                if (inp) inp.value = '';
+                document.body.classList.remove('site-locked');
+                SoundFX.correct();
+                if (gate) gate.classList.add('unlocked');
+                UI.toast("Access Granted! Welcome to PROJECT READi Digital Library.");
+            } else {
+                SoundFX.wrong();
+                if (err) {
+                    err.innerHTML = '&#9888;&#65039; Incorrect password. Please enter the authorized school password.';
+                    err.classList.remove('hidden');
+                }
+                if (inp) {
+                    inp.style.borderColor = '#EF4444';
+                    inp.removeAttribute('readonly');
+                    inp.focus();
+                }
+            }
+        };
+
+        // Ensure normalizeCloudBook includes category & language
+        const origNormalize = App.normalizeCloudBook.bind(App);
+        App.normalizeCloudBook = (id, rawBook) => {
+            const res = origNormalize(id, rawBook);
+            if (res && res.meta) {
+                res.meta.category = res.meta.category || 'Key Stage 1';
+                res.meta.language = res.meta.language || 'Sinugbuanong Binisaya';
+            }
+            return res;
+        };
+
+        // Ensure createNewStory, renderEditor, and saveCurrentStoryMeta handle category & language
+        App.createNewStory = async () => {
+            const newId = 'mod_' + Date.now();
+            App.currentStoryMeta = {
+                id: newId,
+                title: '',
+                author: '',
+                category: 'Key Stage 1',
+                language: 'Sinugbuanong Binisaya',
+                coverThumb: '',
+                pageCount: 0,
+                questions: [],
+                certTemplate: null,
+                certNameY: 52,
+                activityBg: null,
+                updatedAt: Date.now()
+            };
+            App.currentStoryPages = [];
+            await DB.putStory(App.currentStoryMeta);
+            App.navigate('editor');
+        };
+
+        const origRenderEditor = App.renderEditor.bind(App);
+        App.renderEditor = () => {
+            origRenderEditor();
+            if (App.currentStoryMeta) {
+                if (Utils.$('edit-category')) Utils.$('edit-category').value = App.currentStoryMeta.category || 'Key Stage 1';
+                if (Utils.$('edit-language')) Utils.$('edit-language').value = App.currentStoryMeta.language || 'Sinugbuanong Binisaya';
+            }
+        };
+
+        App.saveCurrentStoryMeta = async () => {
+            if (!App.currentStoryMeta) return;
+            App.currentStoryMeta.title = Utils.$('edit-title').value;
+            App.currentStoryMeta.author = Utils.$('edit-author').value;
+            if (Utils.$('edit-category')) App.currentStoryMeta.category = Utils.$('edit-category').value || 'Key Stage 1';
+            if (Utils.$('edit-language')) App.currentStoryMeta.language = Utils.$('edit-language').value || 'Sinugbuanong Binisaya';
+            App.currentStoryMeta.pageCount = App.currentStoryPages.length;
+            App.currentStoryMeta.updatedAt = Date.now();
+            if (App.currentStoryPages.length > 0) {
+                App.currentStoryMeta.coverThumb = App.currentStoryPages[0].image;
+            } else {
+                App.currentStoryMeta.coverThumb = '';
+            }
+            await DB.putStory(App.currentStoryMeta);
+            await App.autoSyncCurrentStoryToCloud(false);
+        };
+
+        // Upgraded Public Student Library Renderer (with Category & Language Badges + Filters + IP Tag)
+        App.renderPublicLibrary = async () => {
+            const books = await App.getCombinedLibraryBooks(false);
+            const searchVal = (Utils.$('student-search-input')?.value || '').trim().toLowerCase();
+            const catFilter = Utils.$('student-category-filter')?.value || 'ALL';
+            const langFilter = Utils.$('student-language-filter')?.value || 'ALL';
+
+            let filtered = books.filter(b => {
+                const cat = b.meta.category || 'Key Stage 1';
+                const lang = b.meta.language || 'Sinugbuanong Binisaya';
+                const t = (b.meta.title || '').toLowerCase();
+                const a = (b.meta.author || '').toLowerCase();
+                const matchSearch = !searchVal || t.includes(searchVal) || a.includes(searchVal) || cat.toLowerCase().includes(searchVal) || lang.toLowerCase().includes(searchVal);
+                const matchCat = (catFilter === 'ALL' || cat === catFilter);
+                const matchLang = (langFilter === 'ALL' || lang === langFilter);
+                return matchSearch && matchCat && matchLang;
+            });
+
+            filtered = App.sortBooksWithRatingsAndCommentsFirst(filtered, App.librarySortMode);
+
+            const grid = Utils.$('public-library-grid');
+            const countLbl = Utils.$('student-book-count-label');
+            if (countLbl) countLbl.textContent = `${filtered.length} Book${filtered.length === 1 ? '' : 's'} Available`;
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            if (filtered.length === 0) {
+                Utils.show('public-empty-state');
+            } else {
+                Utils.hide('public-empty-state');
+            }
+
+            filtered.forEach(item => {
+                const meta = item.meta;
+                const category = meta.category || 'Key Stage 1';
+                const language = meta.language || 'Sinugbuanong Binisaya';
+                const catClass = App.getCategoryBadgeClass(category);
+                const coverSrc = meta.coverThumb || (item.pages && item.pages[0] && item.pages[0].image) || DEFAULT_COVER_B64;
+                const stats = App.getBookStatsSummary(item.id);
+                const starDisplay = stats.reviewCount > 0 ? `&#11088; ${stats.avgStars} (${stats.reviewCount})` : `&#11088; Rate Book`;
+
+                let vocabCount = 0;
+                (item.pages || []).forEach(p => { if (p.hotspots) vocabCount += p.hotspots.length; });
+                const quizCount = (meta.questions && meta.questions.length) ? meta.questions.length : 0;
+
+                const card = document.createElement('div');
+                card.className = 'student-book-card';
+                card.innerHTML = `
+                    <div class="student-book-cover" onclick="App.openBookAsStudent('${item.id}')" title="Click to Read Storybook">
+                        <img src="${coverSrc}" alt="${(meta.title || 'Storybook').replace(/"/g, '&quot;')}">
+                        <div class="badge" style="font-size: 0.85rem; padding: 6px 14px;">${meta.pageCount || (item.pages ? item.pages.length : 0)} Pages &bull; ${vocabCount} Words</div>
+                        <div class="live-reader-pill">
+                            <span class="live-dot" style="width:9px; height:9px;"></span>
+                            <span id="card-live-${item.id}">${stats.liveReaders} Reading Now</span>
+                        </div>
+                    </div>
+                    <div class="student-book-body">
+                        <div class="classification-badges-row">
+                            <span class="category-pill-badge ${catClass}">&#127891; ${category}</span>
+                            <span class="language-pill-badge">&#127760; ${language}</span>
+                        </div>
+                        <div class="student-book-title" title="${(meta.title || 'Untitled Storybook').replace(/"/g, '&quot;')}">${meta.title || 'Untitled Storybook'}</div>
+                        <div class="student-book-author">
+                            <span>&#9997;&#65039; By: ${meta.author || 'Teacher Author'}</span>
+                            <span style="color: #FDE047; font-size: 0.85rem;">${quizCount} Quiz Item${quizCount === 1 ? '' : 's'}</span>
+                        </div>
+                        
+                        <div class="student-metrics-bar">
+                            <div class="metric-item">
+                                <span class="metric-val" id="card-reads-${item.id}">&#128065;&#65039; ${stats.totalReads}</span>
+                                <span class="metric-lbl">Total Reads</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-val" id="card-dl-${item.id}">&#11015;&#65039; ${stats.totalDownloads}</span>
+                                <span class="metric-lbl">Downloads</span>
+                            </div>
+                            <div class="metric-item" style="cursor:pointer;" onclick="App.openReviewModal('${item.id}')">
+                                <span class="metric-val" id="card-stars-${item.id}">${starDisplay}</span>
+                                <span class="metric-lbl">Star Rating</span>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2" style="margin-top: auto; padding-top: 0.5rem; flex-wrap: wrap;">
+                            <button onclick="App.openBookAsStudent('${item.id}')" class="btn btn-gold" style="flex: 2; padding: 0.8rem 1rem; font-size: 1rem; border-radius: 14px;">
+                                &#128214; Read Book
+                            </button>
+                            <button onclick="App.openReviewModal('${item.id}')" class="btn btn-glass" style="flex: 1.2; padding: 0.8rem 0.85rem; font-size: 0.92rem; border-color: var(--color-gold); border-radius: 14px;" title="Rate with Stars &amp; Comment">
+                                &#11088; Reviews (<span id="card-revcount-${item.id}">${stats.reviewCount}</span>)
+                            </button>
+                            ${App.isTeacherAuthenticated ? `<button onclick="App.openStory('${item.id}')" class="btn btn-glass" style="padding: 0.8rem 0.95rem; font-size: 0.92rem; border-color: #38BDF8; color: #BAE6FD; border-radius: 14px;" title="Edit Storybook in Teacher Studio">&#9998; Edit</button>` : ''}
+                            <button onclick="App.studentDownloadBook('${item.id}')" class="btn btn-publish" style="padding: 0.8rem 1rem; font-size: 0.95rem; border-radius: 14px;" title="Download Password-Protected Offline Storybook HTML">
+                                &#11015;&#65039;
+                            </button>
+                        </div>
+                        <div class="ip-card-tag">&#128737;&#65039; Protected IP (R.A. 8293) &bull; PROJECT READi Proponents</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            App.updateAllLiveCountersUI();
+        };
+
+        // Upgraded Teacher Master Repository Renderer (with Category/Language Badges & 1-Click Quick Classifier)
+        App.renderDashboard = async () => {
+            const combined = await App.getCombinedLibraryBooks(true);
+            const tCatFilter = Utils.$('teacher-category-filter')?.value || 'ALL';
+            const tLangFilter = Utils.$('teacher-language-filter')?.value || 'ALL';
+
+            const filteredCombined = combined.filter(item => {
+                const cat = item.meta.category || 'Key Stage 1';
+                const lang = item.meta.language || 'Sinugbuanong Binisaya';
+                const matchCat = (tCatFilter === 'ALL' || cat === tCatFilter);
+                const matchLang = (tLangFilter === 'ALL' || lang === tLangFilter);
+                return matchCat && matchLang;
+            });
+
+            App.storyMetaList = filteredCombined.map(item => ({ ...item.meta, _fullItem: item }));
+            const container = Utils.$('story-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+            if (App.storyMetaList.length === 0) { Utils.show('empty-state'); return; }
+            Utils.hide('empty-state');
+
+            App.storyMetaList.forEach(itemMeta => {
+                const meta = itemMeta;
+                const category = meta.category || 'Key Stage 1';
+                const language = meta.language || 'Sinugbuanong Binisaya';
+                const catClass = App.getCategoryBadgeClass(category);
+                const fullItem = itemMeta._fullItem;
+                const coverImgSrc = meta.coverThumb || (fullItem && fullItem.pages && fullItem.pages[0] && fullItem.pages[0].image) || '';
+                const cover = coverImgSrc ? `<img src="${coverImgSrc}">` : `<svg class="svg-icon" style="width:50px;height:50px;color:rgba(255,255,255,0.2);"><use href="#icon-image"></use></svg>`;
+                const isOnline = Boolean(App.cloudBooksCache && App.cloudBooksCache[meta.id]);
+                const onlineBadge = isOnline ? `<div class="cloud-status-badge">&#9729;&#65039; LIVE ONLINE</div>` : '';
+                const st = App.getBookStatsSummary(meta.id);
+                const ratingBadge = st.reviewCount > 0
+                    ? `<div class="badge" style="background: linear-gradient(135deg, #FFD700, #F59E0B); color: #0F172A;">&#11088; ${st.avgStars} (${st.reviewCount} Review${st.reviewCount === 1 ? '' : 's'})</div>`
+                    : '';
+                const card = document.createElement('div');
+                card.className = 'story-card';
+                card.innerHTML = `
+                    <div class="story-cover" onclick="App.openStory('${meta.id}')" style="cursor:pointer;" title="Click to Edit Storybook">${cover}${ratingBadge}${onlineBadge}</div>
+                    <div class="story-info">
+                        <div class="classification-badges-row">
+                            <span class="category-pill-badge ${catClass}">&#127891; ${category}</span>
+                            <span class="language-pill-badge">&#127760; ${language}</span>
+                        </div>
+                        <div class="story-title" title="${meta.title}">${meta.title || 'Untitled Module'}</div>
+                        <div class="story-meta" style="margin-bottom:0.55rem;">${meta.author || 'Unknown'} &bull; ${meta.pageCount || (fullItem && fullItem.pages ? fullItem.pages.length : 0)} Pages &bull; &#128065;&#65039; ${st.totalReads} Reads</div>
+                        <div class="quick-classify-row" title="1-Click Category &amp; Language Classifier (Auto-Syncs Online)">
+                            <select class="quick-classify-select" onchange="App.quickUpdateBookClassification('${meta.id}', 'category', this.value)">
+                                <option value="Kindergarten" ${category === 'Kindergarten' ? 'selected' : ''}>Kindergarten</option>
+                                <option value="Key Stage 1" ${category === 'Key Stage 1' ? 'selected' : ''}>Key Stage 1</option>
+                                <option value="Key Stage 2" ${category === 'Key Stage 2' ? 'selected' : ''}>Key Stage 2</option>
+                            </select>
+                            <select class="quick-classify-select" style="border-color:rgba(56,189,248,0.5);" onchange="App.quickUpdateBookClassification('${meta.id}', 'language', this.value)">
+                                <option value="Sinugbuanong Binisaya" ${language === 'Sinugbuanong Binisaya' ? 'selected' : ''}>Binisaya</option>
+                                <option value="Filipino" ${language === 'Filipino' ? 'selected' : ''}>Filipino</option>
+                                <option value="English" ${language === 'English' ? 'selected' : ''}>English</option>
+                                <option value="Multilingual" ${language === 'Multilingual' ? 'selected' : ''}>Multilingual</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2" style="margin-top:auto; flex-wrap:wrap;">
+                            <button onclick="App.openStory('${meta.id}')" class="btn btn-glass" style="flex:1; padding:0.45rem; font-size:0.78rem;"><svg class="svg-icon"><use href="#icon-edit"></use></svg> Edit</button>
+                            <button onclick="App.uploadStoryToCloud('${meta.id}')" class="btn btn-publish" style="flex:1; padding:0.45rem; font-size:0.78rem;" title="Sync / Publish to Student Online Library">&#9729;&#65039; ${isOnline ? 'Sync Online' : 'Upload Online'}</button>
+                            <button onclick="App.publishToHTML('${meta.id}')" class="btn btn-glass" style="flex:1; padding:0.45rem; font-size:0.78rem;"><svg class="svg-icon"><use href="#icon-publish"></use></svg> HTML</button>
+                            <button onclick="App.exportToReadi('${meta.id}')" class="btn btn-gold" style="flex:1; padding:0.45rem; font-size:0.78rem;"><svg class="svg-icon"><use href="#icon-save"></use></svg> Export</button>
+                            ${isOnline ? `<button onclick="App.unpublishFromCloud('${meta.id}')" class="btn btn-danger" style="padding:0.45rem 0.65rem; font-size:0.75rem;" title="Remove from Online Library">Unpublish</button>` : ''}
+                            <button onclick="App.deleteStory('${meta.id}')" class="btn btn-danger" style="padding:0.45rem; border-radius:10px;" title="Delete Module Everywhere"><svg class="svg-icon"><use href="#icon-trash"></use></svg></button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        };
+
+        /* -------------------------------------------------------------------------
+           5. UPGRADED STANDALONE HTML EXPORT (WITH BUILT-IN PASSWORD GATE,
+              R.A. 8293 IP UNDERTAKING, WATERMARK & ANTI-COPY PROTECTION)
+           ------------------------------------------------------------------------- */
+        const origPublishToHTML = App.publishToHTML.bind(App);
+        App.publishToHTML = async (storyId) => {
+            UI.confirm(
+                "INTELLECTUAL PROPERTY UNDERTAKING (R.A. 8293): This interactive storybook is the original intellectual creation of PROJECT READi Proponents (Melanie T. Tinonas, Vanessa Infante-Villaruz & Froilan Bhoyd P. Ceriales) of Junob Elementary School. The downloaded HTML file is protected by the School Privacy Password Gate and Digital Watermark. Do you agree to use it strictly for classroom/educational reading and NOT to copy, alter, or plagiarize the story?",
+                async () => {
+                    try {
+                        const combined = await App.getCombinedLibraryBooks(true);
+                        const found = combined.find(b => b.id === storyId);
+                        let meta = found ? found.meta : await DB.getStory(storyId);
+                        let rawPages = found ? found.pages : await DB.getPagesByStory(storyId);
+                        let pages = Array.isArray(rawPages) ? rawPages.filter(Boolean) : Object.values(rawPages || {}).filter(Boolean);
+                        if (!pages || pages.length === 0) { UI.toast("Add pages before publishing."); return; }
+
+                        meta.category = meta.category || 'Key Stage 1';
+                        meta.language = meta.language || 'Sinugbuanong Binisaya';
+                        const exportData = { meta, pages };
+                        const jsonString = JSON.stringify(exportData).replace(/</g, '\\u003c');
+
+                        const standaloneHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>${meta.title || 'Interactive Story'} | PROJECT READi (${meta.category} - ${meta.language})</title>
+    <style>
+        :root { --color-gold: #FFD700; --color-publish: #10B981; --font-main: system-ui, -apple-system, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+        body { font-family: var(--font-main); color: #FFF; min-height: 100vh; overflow: hidden; background: radial-gradient(circle at center, #1E293B 0%, #090D16 100%); display: flex; flex-direction: column; }
+        body.book-locked #view-student { filter: blur(22px); pointer-events: none; }
+        #standalone-ip-gate { position: fixed; inset: 0; z-index: 999999; background: radial-gradient(circle at center, rgba(15, 32, 75, 0.96) 0%, rgba(6, 10, 24, 0.99) 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; overflow-y: auto; }
+        #standalone-ip-gate.unlocked { display: none !important; }
+        .gate-card { background: linear-gradient(155deg, rgba(15, 23, 42, 0.97) 0%, rgba(30, 41, 59, 0.97) 100%); border: 3px solid #FFD700; border-bottom: 8px solid #F59E0B; border-radius: 28px; padding: 2rem 2.2rem; max-width: 560px; width: 100%; text-align: center; box-shadow: 0 25px 65px rgba(0,0,0,0.85); }
+        .gate-pass { width: 100%; padding: 0.85rem 1rem; background: #090D1A; border: 2px solid #FFD700; border-radius: 14px; font-size: 1.3rem; font-weight: 900; color: #FFD700; text-align: center; letter-spacing: 3px; margin: 0.9rem 0; outline: none; -webkit-user-select: text; user-select: text; }
+        .ip-box { background: rgba(9, 13, 26, 0.92); border: 1.5px solid rgba(255,215,0,0.55); border-left: 5px solid #FFD700; border-radius: 14px; padding: 0.85rem 1rem; text-align: left; font-size: 0.8rem; color: #E2E8F0; line-height: 1.45; margin-bottom: 0.9rem; }
+        .ip-watermark-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 240; background: rgba(8, 13, 30, 0.9); border-top: 1.5px solid rgba(255,215,0,0.45); padding: 0.32rem 1rem; text-align: center; font-size: 0.74rem; font-weight: 800; color: #FEF08A; letter-spacing: 0.3px; pointer-events: none; }
+        #view-student { position: fixed; inset: 0; z-index: 200; background: radial-gradient(circle at center, #1E293B 0%, #090D16 100%); display: flex; flex-direction: column; }
+        .student-topbar { position: absolute; top: 0; left: 0; right: 0; padding: 1.25rem 2rem; display: flex; justify-content: space-between; align-items: center; z-index: 250; opacity: 0; transition: opacity 0.3s; background: linear-gradient(to bottom, rgba(0,0,0,0.85), transparent); }
+        #view-student:hover .student-topbar { opacity: 1; }
+        .flex { display: flex; } .gap-4 { gap: 1rem; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.7rem 1.4rem; border-radius: 99px; font-weight: 700; font-size: 0.85rem; font-family: inherit; cursor: pointer; transition: all 0.2s; border: none; gap: 0.5rem; }
+        .btn-gold { background: var(--color-gold); color: #1E293B; box-shadow: 0 4px 15px rgba(255,215,0,0.3); }
+        .btn-publish { background: var(--color-publish); color: #FFF; box-shadow: 0 4px 15px rgba(16,185,129,0.3); }
+        .btn-glass { background: rgba(255,255,255,0.2); color: #FFF; border: 1px solid rgba(255,255,255,0.4); }
+        .student-book-stage { position: relative; display: inline-flex; justify-content: center; align-items: center; max-width: 96vw; max-height: 92vh; perspective: 2600px; border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.75); }
+        .student-image-wrapper { position: relative; display: inline-block; line-height: 0; max-width: 96vw; max-height: 92vh; border-radius: 16px; overflow: hidden; background: #FFF; }
+        .book-page-image { display: block; max-width: 96vw; max-height: 92vh; width: auto; height: auto; background: #FFF; user-select: none; -webkit-user-drag: none; }
+        .hotspot-student-box { position: absolute; cursor: pointer; background: transparent; border: none; border-radius: 50%; transition: all 0.3s ease; touch-action: manipulation; z-index: 15; }
+        .hotspot-student-box:hover, .hotspot-student-box.glowing { background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.65) 0%, transparent 70%); transform: scale(1.06); }
+        .html-book-page { background: linear-gradient(135deg, #312E81 0%, #6D28D9 38%, #BE185D 75%, #D97706 100%); background-size: cover; background-position: center; width: 96vw; max-width: 1600px; height: 90vh; border-radius: 24px; border: 6px solid #FFD700; outline: 3px solid #FFFFFF; box-shadow: inset 0 0 50px rgba(0,0,0,0.35), 0 25px 60px rgba(0,0,0,0.65); padding: 2rem 3.5rem; color: #FFFFFF; overflow-y: auto; position: relative; line-height: 1.5; margin: 0 auto; display: flex; flex-direction: column; }
+        .html-book-page-header { background: linear-gradient(180deg, #FFD700 0%, #F59E0B 100%); color: #1E1B4B; padding: 0.75rem 2.5rem; border-radius: 99px; font-size: 2rem; font-weight: 900; text-align: center; margin: 0 auto 1.5rem auto; max-width: 780px; width: 100%; border: 4px solid #FFFFFF; display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-shrink: 0; }
+        .vocab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.5rem; width: 100%; margin: auto 0; }
+        .vocab-card { background: linear-gradient(145deg, #FEF08A 0%, #FDE047 100%); border-radius: 24px; padding: 1.5rem; border: 4px solid #FFFFFF; border-bottom: 9px solid #EA580C; box-shadow: 0 14px 28px rgba(0,0,0,0.32); position: relative; overflow: hidden; color: #1E293B; }
+        .vocab-card:nth-child(4n+2) { background: linear-gradient(145deg, #BAE6FD 0%, #38BDF8 100%); border-bottom-color: #0369A1; }
+        .vocab-card:nth-child(4n+3) { background: linear-gradient(145deg, #FBCFE8 0%, #F472B6 100%); border-bottom-color: #BE185D; }
+        .vocab-card:nth-child(4n+4) { background: linear-gradient(145deg, #A7F3D0 0%, #34D399 100%); border-bottom-color: #047857; }
+        .vocab-card-num { position: absolute; top: -10px; right: -10px; width: 52px; height: 52px; background: rgba(255,255,255,0.45); border-radius: 50%; display: flex; align-items: flex-end; justify-content: flex-start; padding: 0 0 10px 12px; font-weight: 900; font-size: 0.85rem; color: #0F172A; }
+        .vocab-card h3 { color: #0F172A; font-size: 1.8rem; margin-bottom: 0.5rem; font-weight: 900; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+        .syllable-blend-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.85rem; }
+        .syllable-pill { background: #DC2626; color: #FFFFFF; font-weight: 900; padding: 0.28rem 0.85rem; border-radius: 14px; font-size: 1.2rem; border: 3px solid #FFFFFF; cursor: pointer; box-shadow: 0 4px 0 #991B1B; }
+        .tv-pen-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 205; pointer-events: none; touch-action: none; }
+        .tv-pen-canvas.active { pointer-events: auto; cursor: crosshair; }
+        .teacher-note-banner { position: fixed; bottom: 2.2rem; left: 50%; transform: translateX(-50%); z-index: 260; background: linear-gradient(135deg, #1E1B4B, #312E81); border: 4px solid #FFD700; border-radius: 22px; padding: 1rem 2rem; color: #FFFFFF; max-width: 850px; width: 92%; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .vocab-card .def { color: #0F172A; font-weight: 800; font-size: 1.1rem; background: rgba(255, 255, 255, 0.85); padding: 0.75rem 1rem; border-radius: 14px; border: 2px solid #FFFFFF; }
+        .vocab-audio-btn { width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #2563EB, #1D4ED8); border: 3px solid #FFFFFF; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.15rem; }
+        .quiz-container { display: flex; flex-direction: column; align-items: center; justify-content: center; max-width: 1100px; width: 100%; margin: auto; text-align: center; }
+        .quiz-badge { background: linear-gradient(90deg, #EC4899, #8B5CF6); color: #FFFFFF; font-weight: 900; font-size: 1.05rem; padding: 0.45rem 1.75rem; border-radius: 99px; border: 3px solid #FFFFFF; margin-bottom: 1rem; }
+        .quiz-question-box { background: rgba(15, 23, 42, 0.95); border: 5px solid #FFD700; border-bottom: 10px solid #D97706; border-radius: 28px; padding: 1.85rem 2.5rem; width: 100%; margin-bottom: 1.5rem; }
+        .quiz-question { font-size: 2.2rem; font-weight: 900; color: #FFFFFF; line-height: 1.3; }
+        .quiz-option { width: 100%; padding: 1.1rem 1.6rem; margin-bottom: 1rem; border: 4px solid #FFFFFF; border-radius: 22px; font-size: 1.45rem; font-weight: 900; cursor: pointer; color: #FFFFFF !important; text-align: left; display: flex; align-items: center; gap: 1.35rem; }
+        .quiz-option-A { background: linear-gradient(135deg, #F43F5E 0%, #BE123C 100%) !important; border-bottom: 8px solid #881337 !important; }
+        .quiz-option-B { background: linear-gradient(135deg, #0EA5E9 0%, #0369A1 100%) !important; border-bottom: 8px solid #0C4A6E !important; }
+        .quiz-option-C { background: linear-gradient(135deg, #8B5CF6 0%, #5B21B6 100%) !important; border-bottom: 8px solid #3B0764 !important; }
+        .quiz-option-D { background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%) !important; border-bottom: 8px solid #78350F !important; }
+        .quiz-opt-letter { width: 54px; height: 54px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 900; color: #1E1B4B !important; background: #FACC15 !important; border: 3px solid #FFFFFF; flex-shrink: 0; }
+        .quiz-option.correct { background: linear-gradient(135deg, #10B981 0%, #047857 100%) !important; }
+        .quiz-option.wrong { background: #334155 !important; opacity: 0.75; }
+        .quiz-feedback { font-size: 1.4rem; font-weight: 900; margin-top: 0.5rem; min-height: 2.4rem; border-radius: 99px; padding: 0.5rem 2rem; display: inline-block; }
+        .cert-setup-card { background: rgba(15, 23, 42, 0.96) !important; border: 5px solid #FFD700 !important; border-radius: 32px; padding: 2.75rem 3.5rem; max-width: 920px; width: 100%; margin: auto; text-align: center; color: #FFFFFF !important; }
+        .cert-name-input { font-size: 2.1rem; text-align: center; border: 4px solid #FFD700; border-radius: 20px; background: #FFFFFF !important; width: 100%; padding: 0.9rem 1.25rem; color: #1E1B4B !important; font-weight: 900; margin: 1.5rem 0; -webkit-user-select: text; user-select: text; }
+        .cert-canvas-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.25rem; width: 100%; margin: auto; }
+        .cert-rendered-img { max-width: 94%; max-height: 70vh; border-radius: 16px; border: 5px solid #FFF; object-fit: contain; }
+        .book-base-layer { position: relative; z-index: 1; display: flex; justify-content: center; align-items: center; }
+        .book-Receiving-shadow { position: absolute; inset: 0; z-index: 10; pointer-events: none; background: linear-gradient(to right, rgba(0,0,0,0.45) 0%, transparent 100%); opacity: 0; transition: opacity 1.25s ease; border-radius: 14px; }
+        .page-turn-sheet { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: left center; transform-style: preserve-3d; transition: transform 1.25s cubic-bezier(0.645, 0.045, 0.355, 1.000); z-index: 30; pointer-events: none; border-radius: 14px; }
+        .page-turn-face { position: absolute; inset: 0; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 14px; overflow: hidden; display: flex; justify-content: center; align-items: center; background: #FFFFFF; }
+        .page-turn-back { transform: rotateY(180deg); background: linear-gradient(to right, #CBD5E1 0%, #FFFFFF 55%, #E2E8F0 100%); }
+        .page-turn-back-decor { width: 85%; height: 85%; border: 3px dashed #CBD5E1; border-radius: 12px; display: flex; align-items: center; justify-content: center; opacity: 0.35; font-weight: 900; font-size: 1.5rem; color: #64748B; }
+        .wow-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(8px); }
+        .wow-overlay.active { opacity: 1; pointer-events: auto; }
+        .wow-card { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.6); z-index: 10000; background: #FFD700; border-radius: 30px; border: 5px solid #FFF; padding: 50px 70px; text-align: center; opacity: 0; transition: all 0.4s; min-width: 400px; max-width: 90vw; }
+        .wow-overlay.active .wow-card { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        .wow-syllabication { font-size: 5rem; font-weight: 900; color: #DC2626; text-shadow: 3px 3px 0 #FFF; margin-bottom: 20px; }
+        .wow-definition { font-size: 1.75rem; font-weight: 800; color: #1E3A8A; background: #FFFFFF; padding: 12px 35px; border-radius: 25px; display: inline-block; }
+        .nav-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 75px; height: 75px; border-radius: 50%; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.4); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 210; font-size: 2.5rem; font-weight: bold; }
+        .nav-left { left: 1.5rem; } .nav-right { right: 1.5rem; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="book-locked">
+    <!-- BUILT-IN PRIVACY & INTELLECTUAL PROPERTY GATE FOR DOWNLOADED HTML -->
+    <div id="standalone-ip-gate">
+        <div class="gate-card">
+            <div style="display:inline-block; background:rgba(255,215,0,0.18); border:1.5px solid #FFD700; color:#FEF08A; font-weight:900; font-size:0.75rem; padding:4px 14px; border-radius:99px; text-transform:uppercase; margin-bottom:0.65rem;">
+                &#128274; PROJECT READi Protected Storybook Module
+            </div>
+            <h2 style="font-size:1.65rem; color:#FFD700; margin-bottom:0.25rem;">${meta.title || 'Interactive Storybook'}</h2>
+            <div style="font-size:0.88rem; color:#93C5FD; font-weight:800; margin-bottom:0.85rem;">
+                &#127891; ${meta.category} &bull; &#127760; ${meta.language} &bull; &#9997;&#65039; Author: ${meta.author || 'Teacher-Author'}
+            </div>
+            <div class="ip-box">
+                <div style="font-weight:900; color:#FFD700; margin-bottom:4px;">&#128737;&#65039; INTELLECTUAL PROPERTY &amp; ANTI-PLAGIARISM NOTICE (R.A. 8293)</div>
+                <div>
+                    This offline storybook module is the protected intellectual property of <b>PROJECT READi Proponents (Melanie T. Tinonas, Vanessa Infante-Villaruz &amp; Froilan Bhoyd P. Ceriales)</b> of <b>Junob Elementary School, Dumaguete City</b>. Unauthorized copying, source modification, or claiming ownership of this story is strictly prohibited.
+                </div>
+                <label style="display:flex; align-items:flex-start; gap:0.55rem; margin-top:0.55rem; padding-top:0.5rem; border-top:1px dashed rgba(255,255,255,0.2); color:#FEF08A; font-weight:800; cursor:pointer;">
+                    <input type="checkbox" id="dl-ip-check" checked style="width:18px; height:18px; margin-top:2px; accent-color:#FFD700;">
+                    <span>I acknowledge the Proponents' Intellectual Property Rights and agree to use this module strictly for authorized learning.</span>
+                </label>
+            </div>
+            <input type="password" id="dl-gate-pass" class="gate-pass" placeholder="Enter School Access Password..." onkeydown="if(event.key==='Enter') unlockStandaloneBook()">
+            <div id="dl-gate-err" class="hidden" style="color:#FCA5A5; font-size:0.84rem; font-weight:800; margin-bottom:0.65rem;">&#9888;&#65039; Invalid password or IP Agreement not checked.</div>
+            <button onclick="unlockStandaloneBook()" class="btn btn-gold" style="width:100%; padding:0.9rem; font-size:1.05rem; border-radius:14px;">&#128275; Agree &amp; Open Storybook</button>
+            <div style="font-size:0.72rem; color:#94A3B8; margin-top:0.85rem; line-height:1.4;">
+                Lead Web Application Architect &amp; Cloud Integrator: <b>Froilan Bhoyd P. Ceriales</b><br>
+                Project Adviser &amp; Consultant: <b>Maera G. Mamuyac, Principal</b>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-student" class="auto-landscape">
+        <canvas id="tv-pen-canvas" class="tv-pen-canvas"></canvas>
+        <div id="teacher-note-popup" class="teacher-note-banner hidden">
+            <div>
+                <div style="font-size: 0.75rem; font-weight: 900; color: #FFD700; text-transform: uppercase;">&#128161; Teacher's Guide / Discussion Prompt</div>
+                <div id="teacher-note-text" style="font-size: 1.25rem; font-weight: 800; margin-top: 0.2rem;"></div>
+            </div>
+            <button onclick="Viewer.toggleTeacherNote(false)" class="btn btn-gold" style="padding: 0.4rem 1rem; font-size: 0.85rem; border-radius: 99px;">Got It</button>
+        </div>
+        <div class="student-topbar">
+            <div style="display:flex; align-items:center; gap: 0.5rem; flex-wrap: wrap;">
+                <span style="background:rgba(245,158,11,0.9); color:#0F172A; font-weight:900; font-size:0.78rem; padding:0.4rem 0.9rem; border-radius:99px;">&#127891; ${meta.category} &bull; ${meta.language}</span>
+                <button id="btn-teacher-note" onclick="Viewer.toggleTeacherNote()" class="btn btn-glass hidden" style="padding: 0.5rem 1rem; font-size: 0.8rem; background: rgba(30, 27, 75, 0.85); border-color: #FFD700; color: #FFD700;">&#128161; Teacher's Guide</button>
+                <button id="btn-tv-pen" class="btn btn-glass" style="padding: 0.5rem 1rem; font-size: 0.8rem; background: rgba(0,0,0,0.55);" onclick="Viewer.togglePen()">&#9999;&#65039; TV Pen</button>
+                <button id="btn-tv-pen-clear" class="btn btn-glass hidden" style="padding: 0.5rem 0.9rem; font-size: 0.8rem; background: rgba(239,68,68,0.8);" onclick="Viewer.clearPen()">&#128465; Clear</button>
+                <button class="btn btn-glass" style="padding: 0.5rem 1rem; font-size: 0.8rem; background: rgba(0,0,0,0.55);" onclick="Viewer.toggleFullscreen()">&#9974; Fullscreen</button>
+            </div>
+            <div style="display:flex; align-items:center; gap: 0.75rem;">
+                <button id="btn-play-page-audio" class="btn btn-gold hidden" onclick="Viewer.playPageAudio()">&#9835; Play Audio</button>
+                <div id="student-page-indicator" style="font-weight: 800; font-size: 1rem; padding: 0.5rem 1.5rem; background: rgba(0,0,0,0.7); border-radius: 99px; border: 1px solid rgba(255,255,255,0.2);">Page 1</div>
+            </div>
+        </div>
+        <div style="flex: 1; position: relative; display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;">
+            <div id="student-page-wrapper" class="student-book-stage"></div>
+        </div>
+        <button onclick="Viewer.prevPage()" id="btn-prev-page" class="nav-btn nav-left hidden">&lt;</button>
+        <button onclick="Viewer.nextPage()" id="btn-next-page" class="nav-btn nav-right hidden">&gt;</button>
+        <div id="wow-overlay" class="wow-overlay" onclick="Viewer.closeWowPopup()">
+            <div class="wow-card" id="wow-card" onclick="event.stopPropagation()">
+                <div id="wow-syllables" class="wow-syllabication"></div>
+                <div id="wow-definition" class="wow-definition"></div>
+            </div>
+        </div>
+        <div class="ip-watermark-bar">
+            &#128737;&#65039; Protected IP (R.A. 8293) &bull; PROJECT READi Proponents: Melanie T. Tinonas, Vanessa Infante-Villaruz &amp; Froilan Bhoyd P. Ceriales (Web Architect) &bull; Junob ES
+        </div>
+    </div>
+
+    <script>
+        function unlockStandaloneBook() {
+            var pass = document.getElementById('dl-gate-pass').value.trim();
+            var chk = document.getElementById('dl-ip-check').checked;
+            var err = document.getElementById('dl-gate-err');
+            if (!chk || pass !== '119948') {
+                err.classList.remove('hidden');
+                return;
+            }
+            document.body.classList.remove('book-locked');
+            document.getElementById('standalone-ip-gate').classList.add('unlocked');
+            SoundFX.correct();
+        }
+        document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        document.addEventListener('dragstart', function(e) { e.preventDefault(); });
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey && ['u','U','s','S','c','C','p','P'].indexOf(e.key) !== -1) || e.key === 'F12') {
+                e.preventDefault();
+            }
+        });
+        const storyData = ${jsonString};
+        const SoundFX = {
+            ctx: null,
+            getCtx: ${SoundFX.getCtx.toString()},
+            playTone: ${SoundFX.playTone.toString()},
+            correct: ${SoundFX.correct.toString()},
+            wrong: ${SoundFX.wrong.toString()},
+            flip: ${SoundFX.flip.toString()},
+            fanfare: ${SoundFX.fanfare.toString()}
+        };
+        const Viewer = {
+            vPages: [], idx: 0, activeAudio: null, activeBlobUrl: null, activeBufferSource: null, wowTimer: null, isFlipping: false, certName: '', certDataUrl: null, storyMeta: null,
+            quizScore: 0, quizAnswered: {}, wordsPracticed: 0, penActive: false, penDrawing: false, quizOptFontSize: 1.45,
+            toggleQuizOptSettings: ${Viewer.toggleQuizOptSettings.toString()},
+            setQuizOptFontSize: ${Viewer.setQuizOptFontSize.toString()},
+            initData: ${Viewer.initData.toString()},
+            initTouchSwipe: ${Viewer.initTouchSwipe.toString()},
+            initPenCanvas: ${Viewer.initPenCanvas.toString()},
+            togglePen: ${Viewer.togglePen.toString()},
+            clearPen: ${Viewer.clearPen.toString()},
+            toggleTeacherNote: ${Viewer.toggleTeacherNote.toString()},
+            speakSyllable: ${Viewer.speakSyllable.toString()},
+            toggleLandscape: ${Viewer.toggleLandscape.toString()},
+            toggleFullscreen: ${Viewer.toggleFullscreen.toString()},
+            base64ToBytes: ${Viewer.base64ToBytes.toString()},
+            stopAudio: ${Viewer.stopAudio.toString()},
+            playWebAudioFallback: ${Viewer.playWebAudioFallback.toString()},
+            playAudio: ${Viewer.playAudio.toString()},
+            playPageAudio: ${Viewer.playPageAudio.toString()},
+            createPageDOM: ${Viewer.createPageDOM.toString()},
+            playVocabAudio: ${Viewer.playVocabAudio.toString()},
+            answerQuiz: ${Viewer.answerQuiz.toString()},
+            lockCert: ${Viewer.lockCert.toString()},
+            resetCertName: ${Viewer.resetCertName.toString()},
+            renderCertCanvas: ${Viewer.renderCertCanvas.toString()},
+            downloadCert: ${Viewer.downloadCert.toString()},
+            shareCert: ${Viewer.shareCert.toString()},
+            renderPage: ${Viewer.renderPage.toString()},
+            nextPage: ${Viewer.nextPage.toString()},
+            prevPage: ${Viewer.prevPage.toString()},
+            triggerWow: ${Viewer.triggerWow.toString()},
+            closeWowPopup: ${Viewer.closeWowPopup.toString()}
+        };
+        window.addEventListener('DOMContentLoaded', function() {
+            Viewer.initData(storyData.meta, storyData.pages);
+            Viewer.renderPage();
+            window.addEventListener('keydown', function(e) {
+                if (document.body.classList.contains('book-locked')) return;
+                if (e.key === 'ArrowRight') Viewer.nextPage();
+                else if (e.key === 'ArrowLeft') Viewer.prevPage();
+                else if (e.key === 'Escape') Viewer.closeWowPopup();
+            });
+        });
+    <\/script>
+</body>
+</html>`;
+
+                        const blob = new Blob([standaloneHTML], { type: 'text/html' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = (meta.title || 'Interactive_Story').replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.html';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        UI.toast("Password-Protected Standalone HTML book downloaded!");
+                    } catch (e) {
+                        UI.toast("Failed to publish HTML.");
+                    }
+                }
+            );
+        };
+
+        /* -------------------------------------------------------------------------
+           6. GLOBAL ANTI-COPY, ANTI-RIGHT-CLICK & ANTI-DRAG ON MAIN PORTAL
+           ------------------------------------------------------------------------- */
+        document.addEventListener('contextmenu', (e) => {
+            if (e.target.tagName === 'IMG' || e.target.closest('#view-student') || e.target.closest('.student-book-card')) {
+                e.preventDefault();
+                UI.toast("Protected Intellectual Property of PROJECT READi Proponents (Junob ES)");
+            }
+        });
+        document.addEventListener('dragstart', (e) => {
+            if (e.target.tagName === 'IMG') e.preventDefault();
+        });
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey && ['u', 'U', 's', 'S', 'c', 'C'].includes(e.key)) || e.key === 'F12') {
+                if (document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+                e.preventDefault();
+                UI.toast("Protected Content: Source copying is disabled under PROJECT READi IP Policy.");
+            }
+        });
+
+        // Re-render current views to immediately display the new Category & Language badges
+        App.renderPublicLibrary();
+        if (!Utils.$('view-dashboard').classList.contains('hidden')) {
+            App.renderDashboard();
+            App.renderUtilizationReport();
+        }
+    };
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(applyReadiUpgrades, 60);
+    } else {
+        window.addEventListener('DOMContentLoaded', () => setTimeout(applyReadiUpgrades, 60));
+    }
+})();
+</script>
