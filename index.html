@@ -1242,7 +1242,7 @@
         </div>
         <footer class="innovation-credits-footer" style="margin-top: 1.5rem;">
             <div class="footer-line-main">PROJECT READi | Innovation Proponents, Creators &amp; Teacher-Authors: Melanie T. Tinonas &bull; Vanessa Infante-Villaruz &bull; Froilan Bhoyd P. Ceriales</div>
-            <div class="footer-line-adviser">Lead Web Application Architect, Cloud Systems Integrator &amp; AI Prompt Engineer (GitHub &bull; Netlify &bull; Google Firebase): Froilan Bhoyd P. Ceriales</div>
+            <div class="footer-line-adviser">Platform Developer, Cloud Systems Integrator &amp; AI Prompt Engineer (GitHub &bull; Netlify &bull; Google Firebase): Froilan Bhoyd P. Ceriales</div>
             <div class="footer-line-sub">Project Adviser &amp; Consultant: Maera G. Mamuyac, Principal | Original Localized Stories &amp; Audio Protected under R.A. 8293 (Intellectual Property Code of the Philippines)</div>
         </footer>
     </div>
@@ -2975,6 +2975,40 @@
             closeWowPopup: () => { clearTimeout(Viewer.wowTimer); document.getElementById('wow-overlay').classList.remove('active'); }
         };
 
+        
+        // Snapshot pure Viewer methods for 100% self-contained standalone HTML export
+        const __PureViewerMethods = {
+            toggleQuizOptSettings: Viewer.toggleQuizOptSettings.toString(),
+            setQuizOptFontSize: Viewer.setQuizOptFontSize.toString(),
+            initData: Viewer.initData.toString(),
+            initTouchSwipe: Viewer.initTouchSwipe.toString(),
+            initPenCanvas: Viewer.initPenCanvas.toString(),
+            togglePen: Viewer.togglePen.toString(),
+            clearPen: Viewer.clearPen.toString(),
+            toggleTeacherNote: Viewer.toggleTeacherNote.toString(),
+            speakSyllable: Viewer.speakSyllable.toString(),
+            toggleLandscape: Viewer.toggleLandscape.toString(),
+            toggleFullscreen: Viewer.toggleFullscreen.toString(),
+            base64ToBytes: Viewer.base64ToBytes.toString(),
+            stopAudio: Viewer.stopAudio.toString(),
+            playWebAudioFallback: Viewer.playWebAudioFallback.toString(),
+            playAudio: Viewer.playAudio.toString(),
+            playPageAudio: Viewer.playPageAudio.toString(),
+            createPageDOM: Viewer.createPageDOM.toString(),
+            playVocabAudio: Viewer.playVocabAudio.toString(),
+            answerQuiz: Viewer.answerQuiz.toString(),
+            lockCert: Viewer.lockCert.toString(),
+            resetCertName: Viewer.resetCertName.toString(),
+            renderCertCanvas: Viewer.renderCertCanvas.toString(),
+            downloadCert: Viewer.downloadCert.toString(),
+            shareCert: Viewer.shareCert.toString(),
+            renderPage: Viewer.renderPage.toString(),
+            nextPage: Viewer.nextPage.toString(),
+            prevPage: Viewer.prevPage.toString(),
+            triggerWow: Viewer.triggerWow.toString(),
+            closeWowPopup: Viewer.closeWowPopup.toString()
+        };
+
         const App = {
             storyMetaList: [], currentStoryMeta: null, currentStoryPages: [], currentPageIndex: -1,
             isDrawing: false, startX: 0, startY: 0, tempHotspot: null,
@@ -4359,35 +4393,35 @@
         const Viewer = {
             vPages: [], idx: 0, activeAudio: null, activeBlobUrl: null, activeBufferSource: null, wowTimer: null, isFlipping: false, certName: '', certDataUrl: null, storyMeta: null,
             quizScore: 0, quizAnswered: {}, wordsPracticed: 0, penActive: false, penDrawing: false, quizOptFontSize: (() => { try { return parseFloat(localStorage.getItem('readi_quiz_opt_size')) || 1.45; } catch (e) { return 1.45; } })(),
-            toggleQuizOptSettings: ${Viewer.toggleQuizOptSettings.toString()},
-            setQuizOptFontSize: ${Viewer.setQuizOptFontSize.toString()},
-            initData: ${Viewer.initData.toString()},
-            initTouchSwipe: ${Viewer.initTouchSwipe.toString()},
-            initPenCanvas: ${Viewer.initPenCanvas.toString()},
-            togglePen: ${Viewer.togglePen.toString()},
-            clearPen: ${Viewer.clearPen.toString()},
-            toggleTeacherNote: ${Viewer.toggleTeacherNote.toString()},
-            speakSyllable: ${Viewer.speakSyllable.toString()},
-            toggleLandscape: ${Viewer.toggleLandscape.toString()},
-            toggleFullscreen: ${Viewer.toggleFullscreen.toString()},
-            base64ToBytes: ${Viewer.base64ToBytes.toString()},
-            stopAudio: ${Viewer.stopAudio.toString()},
-            playWebAudioFallback: ${Viewer.playWebAudioFallback.toString()},
-            playAudio: ${Viewer.playAudio.toString()},
-            playPageAudio: ${Viewer.playPageAudio.toString()},
-            createPageDOM: ${Viewer.createPageDOM.toString()},
-            playVocabAudio: ${Viewer.playVocabAudio.toString()},
-            answerQuiz: ${Viewer.answerQuiz.toString()},
-            lockCert: ${Viewer.lockCert.toString()},
-            resetCertName: ${Viewer.resetCertName.toString()},
-            renderCertCanvas: ${Viewer.renderCertCanvas.toString()},
-            downloadCert: ${Viewer.downloadCert.toString()},
-            shareCert: ${Viewer.shareCert.toString()},
-            renderPage: ${Viewer.renderPage.toString()},
-            nextPage: ${Viewer.nextPage.toString()},
-            prevPage: ${Viewer.prevPage.toString()},
-            triggerWow: ${Viewer.triggerWow.toString()},
-            closeWowPopup: ${Viewer.closeWowPopup.toString()}
+            toggleQuizOptSettings: ${__PureViewerMethods.toggleQuizOptSettings},
+            setQuizOptFontSize: ${__PureViewerMethods.setQuizOptFontSize},
+            initData: ${__PureViewerMethods.initData},
+            initTouchSwipe: ${__PureViewerMethods.initTouchSwipe},
+            initPenCanvas: ${__PureViewerMethods.initPenCanvas},
+            togglePen: ${__PureViewerMethods.togglePen},
+            clearPen: ${__PureViewerMethods.clearPen},
+            toggleTeacherNote: ${__PureViewerMethods.toggleTeacherNote},
+            speakSyllable: ${__PureViewerMethods.speakSyllable},
+            toggleLandscape: ${__PureViewerMethods.toggleLandscape},
+            toggleFullscreen: ${__PureViewerMethods.toggleFullscreen},
+            base64ToBytes: ${__PureViewerMethods.base64ToBytes},
+            stopAudio: ${__PureViewerMethods.stopAudio},
+            playWebAudioFallback: ${__PureViewerMethods.playWebAudioFallback},
+            playAudio: ${__PureViewerMethods.playAudio},
+            playPageAudio: ${__PureViewerMethods.playPageAudio},
+            createPageDOM: ${__PureViewerMethods.createPageDOM},
+            playVocabAudio: ${__PureViewerMethods.playVocabAudio},
+            answerQuiz: ${__PureViewerMethods.answerQuiz},
+            lockCert: ${__PureViewerMethods.lockCert},
+            resetCertName: ${__PureViewerMethods.resetCertName},
+            renderCertCanvas: ${__PureViewerMethods.renderCertCanvas},
+            downloadCert: ${__PureViewerMethods.downloadCert},
+            shareCert: ${__PureViewerMethods.shareCert},
+            renderPage: ${__PureViewerMethods.renderPage},
+            nextPage: ${__PureViewerMethods.nextPage},
+            prevPage: ${__PureViewerMethods.prevPage},
+            triggerWow: ${__PureViewerMethods.triggerWow},
+            closeWowPopup: ${__PureViewerMethods.closeWowPopup}
         };
         let __readiBooted = false;
         const bootStandaloneBook = () => {
@@ -5169,9 +5203,9 @@
 <!-- ============================================================================
      PROJECT READi COMPLETE UPGRADE MODULE (100% DROP-IN ENHANCEMENT)
      - Proponents: Melanie T. Tinonas • Vanessa Infante-Villaruz • Froilan Bhoyd P. Ceriales
-     - Lead Web Application Architect & Cloud Integrator: Froilan Bhoyd P. Ceriales
+     - Platform Developer & Cloud Integrator: Froilan Bhoyd P. Ceriales
      - Features:
-       1. Updated Proponents & Web Application Architect Credits Footer
+       1. Updated Proponents & Platform Developer Credits Footer
        2. R.A. 8293 Intellectual Property Undertaking on Website Password Gate
        3. Password Gate + IP Undertaking + Watermark + Anti-Copy inside Downloaded HTML Books
        4. Category (Kindergarten, Key Stage 1, Key Stage 2) & Language Classification + Filters
@@ -5333,7 +5367,7 @@
         document.querySelectorAll('.innovation-credits-footer').forEach(footer => {
             footer.innerHTML = `
                 <div class="footer-line-main">PROJECT READi | Innovation Proponents, Creators &amp; Teacher-Authors: Melanie T. Tinonas &bull; Vanessa Infante-Villaruz &bull; Froilan Bhoyd P. Ceriales</div>
-                <div class="footer-line-adviser">Lead Web Application Architect, Cloud Systems Integrator &amp; AI Prompt Engineer (GitHub &bull; Netlify &bull; Google Firebase): Froilan Bhoyd P. Ceriales</div>
+                <div class="footer-line-adviser">Platform Developer, Cloud Systems Integrator &amp; AI Prompt Engineer (GitHub &bull; Netlify &bull; Google Firebase): Froilan Bhoyd P. Ceriales</div>
                 <div class="footer-line-sub">Project Adviser &amp; Consultant: Maera G. Mamuyac, Principal | Original Localized Stories &amp; Audio Protected under R.A. 8293 (Intellectual Property Code of the Philippines)</div>
             `;
         });
@@ -5817,6 +5851,23 @@
         .wow-definition { font-size: 1.75rem; font-weight: 800; color: #1E3A8A; background: #FFFFFF; padding: 12px 35px; border-radius: 25px; display: inline-block; }
         .nav-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 75px; height: 75px; border-radius: 50%; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.4); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 210; font-size: 2.5rem; font-weight: bold; }
         .nav-left { left: 1.5rem; } .nav-right { right: 1.5rem; }
+        .quiz-opt-settings-wrap { position: absolute; bottom: 14px; right: 18px; z-index: 45; display: flex; align-items: center; gap: 0.45rem; }
+        .quiz-opt-settings-btn { width: 34px; height: 34px; border-radius: 50%; background: rgba(15, 23, 42, 0.82); border: 2px solid rgba(255, 215, 0, 0.7); color: #FFD700; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
+        .quiz-opt-settings-panel { background: rgba(15, 23, 42, 0.95); border: 2px solid #FFD700; border-radius: 99px; padding: 0.25rem 0.75rem; display: flex; align-items: center; gap: 0.45rem; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65); font-size: 0.75rem; font-weight: 800; color: #FEF08A; }
+        .quiz-opt-settings-panel input[type="range"] { width: 85px; accent-color: #FFD700; cursor: pointer; }
+        @media screen and (max-width: 860px) and (orientation: portrait) {
+            #view-student.auto-landscape {
+                position: fixed !important; top: 0 !important; left: 100vw !important;
+                width: 100vh !important; height: 100vw !important;
+                transform: rotate(90deg) !important; transform-origin: top left !important;
+                overflow: hidden !important; z-index: 200 !important;
+            }
+            #view-student.auto-landscape .student-book-stage,
+            #view-student.auto-landscape .student-image-wrapper,
+            #view-student.auto-landscape .book-page-image { max-width: 94vh !important; max-height: 88vw !important; }
+            #view-student.auto-landscape .html-book-page { width: 94vh !important; max-width: 94vh !important; height: 88vw !important; padding: 1rem 1.75rem !important; }
+            #view-student.auto-landscape .student-topbar { opacity: 1 !important; padding: 0.5rem 1.25rem !important; }
+        }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -5855,7 +5906,7 @@
             </div>
         </div>
         <div class="ip-watermark-bar">
-            &#128737;&#65039; Protected IP (R.A. 8293) &bull; PROJECT READi Proponents: Melanie T. Tinonas, Vanessa Infante-Villaruz &amp; Froilan Bhoyd P. Ceriales (Web Architect) &bull; Junob ES
+            &#128737;&#65039; Protected IP (R.A. 8293) &bull; PROJECT READi Proponents: Melanie T. Tinonas, Vanessa Infante-Villaruz &amp; Froilan Bhoyd P. Ceriales (Platform Developer) &bull; Junob ES
         </div>
     </div>
 
@@ -5873,35 +5924,35 @@
         const Viewer = {
             vPages: [], idx: 0, activeAudio: null, activeBlobUrl: null, activeBufferSource: null, wowTimer: null, isFlipping: false, certName: '', certDataUrl: null, storyMeta: null,
             quizScore: 0, quizAnswered: {}, wordsPracticed: 0, penActive: false, penDrawing: false, quizOptFontSize: 1.45,
-            toggleQuizOptSettings: ${Viewer.toggleQuizOptSettings.toString()},
-            setQuizOptFontSize: ${Viewer.setQuizOptFontSize.toString()},
-            initData: ${Viewer.initData.toString()},
-            initTouchSwipe: ${Viewer.initTouchSwipe.toString()},
-            initPenCanvas: ${Viewer.initPenCanvas.toString()},
-            togglePen: ${Viewer.togglePen.toString()},
-            clearPen: ${Viewer.clearPen.toString()},
-            toggleTeacherNote: ${Viewer.toggleTeacherNote.toString()},
-            speakSyllable: ${Viewer.speakSyllable.toString()},
-            toggleLandscape: ${Viewer.toggleLandscape.toString()},
-            toggleFullscreen: ${Viewer.toggleFullscreen.toString()},
-            base64ToBytes: ${Viewer.base64ToBytes.toString()},
-            stopAudio: ${Viewer.stopAudio.toString()},
-            playWebAudioFallback: ${Viewer.playWebAudioFallback.toString()},
-            playAudio: ${Viewer.playAudio.toString()},
-            playPageAudio: ${Viewer.playPageAudio.toString()},
-            createPageDOM: ${Viewer.createPageDOM.toString()},
-            playVocabAudio: ${Viewer.playVocabAudio.toString()},
-            answerQuiz: ${Viewer.answerQuiz.toString()},
-            lockCert: ${Viewer.lockCert.toString()},
-            resetCertName: ${Viewer.resetCertName.toString()},
-            renderCertCanvas: ${Viewer.renderCertCanvas.toString()},
-            downloadCert: ${Viewer.downloadCert.toString()},
-            shareCert: ${Viewer.shareCert.toString()},
-            renderPage: ${Viewer.renderPage.toString()},
-            nextPage: ${Viewer.nextPage.toString()},
-            prevPage: ${Viewer.prevPage.toString()},
-            triggerWow: ${Viewer.triggerWow.toString()},
-            closeWowPopup: ${Viewer.closeWowPopup.toString()}
+            toggleQuizOptSettings: ${__PureViewerMethods.toggleQuizOptSettings},
+            setQuizOptFontSize: ${__PureViewerMethods.setQuizOptFontSize},
+            initData: ${__PureViewerMethods.initData},
+            initTouchSwipe: ${__PureViewerMethods.initTouchSwipe},
+            initPenCanvas: ${__PureViewerMethods.initPenCanvas},
+            togglePen: ${__PureViewerMethods.togglePen},
+            clearPen: ${__PureViewerMethods.clearPen},
+            toggleTeacherNote: ${__PureViewerMethods.toggleTeacherNote},
+            speakSyllable: ${__PureViewerMethods.speakSyllable},
+            toggleLandscape: ${__PureViewerMethods.toggleLandscape},
+            toggleFullscreen: ${__PureViewerMethods.toggleFullscreen},
+            base64ToBytes: ${__PureViewerMethods.base64ToBytes},
+            stopAudio: ${__PureViewerMethods.stopAudio},
+            playWebAudioFallback: ${__PureViewerMethods.playWebAudioFallback},
+            playAudio: ${__PureViewerMethods.playAudio},
+            playPageAudio: ${__PureViewerMethods.playPageAudio},
+            createPageDOM: ${__PureViewerMethods.createPageDOM},
+            playVocabAudio: ${__PureViewerMethods.playVocabAudio},
+            answerQuiz: ${__PureViewerMethods.answerQuiz},
+            lockCert: ${__PureViewerMethods.lockCert},
+            resetCertName: ${__PureViewerMethods.resetCertName},
+            renderCertCanvas: ${__PureViewerMethods.renderCertCanvas},
+            downloadCert: ${__PureViewerMethods.downloadCert},
+            shareCert: ${__PureViewerMethods.shareCert},
+            renderPage: ${__PureViewerMethods.renderPage},
+            nextPage: ${__PureViewerMethods.nextPage},
+            prevPage: ${__PureViewerMethods.prevPage},
+            triggerWow: ${__PureViewerMethods.triggerWow},
+            closeWowPopup: ${__PureViewerMethods.closeWowPopup}
         };
         let __readiBooted = false;
         const bootStandaloneBook = function() {
